@@ -3,6 +3,7 @@ import Privacy from "./Components/privacy/Privacy";
 import Home from "./Components/home/Home";
 import Terms from "./Components/terms/Terms";
 import Return from "./Components/return/Return";
+import Payment from "./Components/payment/Payment";
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/return" element={<Return />} />
+        <Route path="/payment/:id" element={<Payment />} />
       </Routes>
     </div>
   );
