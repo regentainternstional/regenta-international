@@ -22,7 +22,7 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-bold mb-3">Contact Us</h3>
           <p className="text-sm">
-            <strong>Address:</strong> Delhi, India
+            <strong>Address:</strong> First Floor, 106 Plot No 3 Dilshad Garden O & P Block LSC Delhi 110095 Delhi Shahdara 
           </p>
           <p className="text-sm mt-2">
             <strong>Phone:</strong> +91-7302622997

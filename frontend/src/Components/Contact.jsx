@@ -76,7 +76,7 @@ const ContactUs = () => {
               </a>
             </li>
             <li>
-              📍 <span className="font-medium">Address:</span> Delhi, India
+              📍 <span className="font-medium">Address:</span>First Floor, 106 Plot No 3 Dilshad Garden O & P Block LSC Delhi 110095 Delhi Shahdara
             </li>
           </ul>
 

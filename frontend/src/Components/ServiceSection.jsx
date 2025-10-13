@@ -16,6 +16,7 @@ const services = [
     title: "Web Development",
     description:
       "Our Web Developers construct specialised websites and web apps. With the latest online technology in the market.",
+    basicPrice: "₹2000",
   },
   {
     id: 2,
@@ -25,6 +26,7 @@ const services = [
     title: "App Development",
     description:
       "We provide iOS and Android app development services to help you succeed in the competitive mobile app market.",
+    basicPrice: "₹5000",
   },
   {
     id: 3,
@@ -32,13 +34,15 @@ const services = [
     title: "Software Development",
     description:
       "We provide software development services for startups, businesses looking for custom software solutions.",
+    basicPrice: "₹5000",
   },
   {
     id: 4,
     icon: <FaShoppingCart className="text-blue-500 text-2xl md:text-3xl" />,
-    title: "Ecommerce Development",
+    title: "Graphic Design",
     description:
-      "Custom e-commerce solutions for seamless online transactions. Boost sales and customer engagement with our tailored approach.",
+      "Creative and visually stunning designs that capture your brand’s identity. From logos to social media posts, we make your visuals stand out.",
+    basicPrice: "₹500 per design",
   },
   {
     id: 5,
@@ -46,6 +50,7 @@ const services = [
     title: "Digital Marketing",
     description:
       "Effective digital marketing campaigns. Engage, convert, and grow your audience with our strategic approach.",
+    basicPrice: "₹1000",
   },
   {
     id: 6,
@@ -53,6 +58,7 @@ const services = [
     title: "UX/UI Designs",
     description:
       "Enhance user experiences with our expert UI/UX design. Drive engagement and elevate your brand.",
+    basicPrice: "₹1000",
   },
 ];
 
@@ -295,9 +301,10 @@ const ServicesSection = () => {
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-1 sm:mb-2">
                 {service.title}
               </h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
+              <p className="text-sm sm:text-base text-gray-600">
                 {service.description}
               </p>
+              <p className="mb-3 text-gray-600">Basic Price: {service.basicPrice}</p>
               <Link
                 to={`/payment/${encodeURIComponent(service.title)}`}
                 className="text-blue-600 text-sm sm:text-base font-medium flex items-center gap-1 hover:underline transition duration-200"
