@@ -79,7 +79,7 @@ export default function Payment() {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                 amount: order.amount,
                 currency: order.currency,
-                name: "Regenta International",
+                name: "Regent International",
                 description: "UPI Payment - Scan QR or use UPI apps",
                 order_id: order.id,
                 prefill: {

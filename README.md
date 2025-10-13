@@ -1,6 +1,6 @@
-# Regenta International Website
+# Regent International Website
 
-A full-stack web application for Regenta International, built using the MERN stack.
+A full-stack web application for Regent International, built using the MERN stack.
 
 ## Tech Stack
 - **Frontend**: React + Vite.js + Tailwind CSS  

@@ -6,22 +6,22 @@ import "swiper/css/pagination";
 
 const testimonials = [
   {
-    text: "We are very pleased with the website created by Regenta International Technologies for Minpatna.com, our nursing and paramedical college. Their team comprehensively understood our needs and delivered a website that is both visually impressive and user-friendly.",
+    text: "We are very pleased with the website created by Regent International Technologies for Minpatna.com, our nursing and paramedical college. Their team comprehensively understood our needs and delivered a website that is both visually impressive and user-friendly.",
     name: "Prem Kumar",
     title: "Founder & CEO of MIN Patna",
   },
   {
-    text: "Working with Regenta International Technologies on our eCommerce Android app has been fantastic. Their team's expertise and dedication resulted in a high-quality, user-friendly app that perfectly meets our needs. I confidently recommend Regenta International Technologies for any eCommerce app development project.",
+    text: "Working with Regent International Technologies on our eCommerce Android app has been fantastic. Their team's expertise and dedication resulted in a high-quality, user-friendly app that perfectly meets our needs. I confidently recommend Regent International Technologies for any eCommerce app development project.",
     name: "Abhilash Maithani",
     title: "Founder & CEO of Garhwal Mobile",
   },
   {
-    text: "I'm thrilled with the website Regenta International Technologies developed for my white labeling business. They understood my needs and created a user-friendly site. I highly recommend Regenta International Technologies for top-notch website development.",
+    text: "I'm thrilled with the website Regent International Technologies developed for my white labeling business. They understood my needs and created a user-friendly site. I highly recommend Regent International Technologies for top-notch website development.",
     name: "Rewati",
     title: "Founder & CEO of Rewati Hitech",
   },
   {
-    text: "The team at Regenta International is excellent. They delivered exactly what we wanted and provided outstanding support throughout the development process.",
+    text: "The team at Regent International is excellent. They delivered exactly what we wanted and provided outstanding support throughout the development process.",
     name: "Rohit Sharma",
     title: "Business Owner",
   },
@@ -35,7 +35,7 @@ const Testimonials = () => {
           Our <span className="text-blue-600">Testimonials</span>
         </h2>
         <p className="text-gray-600 mb-8">
-          Discover what our clients have to say about their experience working with Regenta International Technologies.
+          Discover what our clients have to say about their experience working with Regent International Technologies.
         </p>
 
         <Swiper

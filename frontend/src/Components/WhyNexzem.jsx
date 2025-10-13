@@ -16,10 +16,10 @@ const WhyRegenta = () => {
         {/* Text Content */}
         <div>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-6">
-            Why <span className="text-blue-600">Regenta International</span>
+            Why <span className="text-blue-600">Regent International</span>
           </h2>
           <p className="text-gray-600 text-sm sm:text-base mb-4">
-            Regenta International is dedicated to providing exceptional software solutions,
+            Regent International is dedicated to providing exceptional software solutions,
             setting industry standards with our innovative approach. Our client-centric
             philosophy drives us to deeply understand each business we work with,
             ensuring our solutions are precisely tailored to meet their needs.
@@ -53,7 +53,7 @@ const WhyRegenta = () => {
             <div className="absolute inset-0 rounded-full bg-blue-50 transform rotate-12"></div>
             <img
               src={whyImage}
-              alt="Why Regenta International"
+              alt="Why Regent International"
               className="relative z-10 rounded-lg w-full h-full object-cover"
             />
           </div>

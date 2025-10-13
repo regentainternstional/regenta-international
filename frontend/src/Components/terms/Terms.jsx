@@ -104,7 +104,7 @@ const Terms = () => {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Welcome to{" "}
             <span className="font-semibold text-blue-600">
-              Regenta International
+              Regent International
             </span>
             . These terms govern your use of our website and services.
           </p>
@@ -149,7 +149,7 @@ const Terms = () => {
             </div>
             <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
               <h3 className="font-semibold text-blue-800 mb-4">
-                Regenta International
+                Regent International
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -322,7 +322,7 @@ const Terms = () => {
             <div className="space-y-4">
               <p className="text-gray-700 leading-relaxed">
                 All content, designs, source code, graphics, and materials
-                provided by Regenta International remain our intellectual
+                provided by Regent International remain our intellectual
                 property unless otherwise agreed in writing.
               </p>
               <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
@@ -397,7 +397,7 @@ const Terms = () => {
             </div>
             <div className="space-y-4">
               <p className="text-gray-700 leading-relaxed">
-                Regenta International will not be held liable for any indirect,
+                Regent International will not be held liable for any indirect,
                 incidental, or consequential damages arising from the use of our
                 services.
               </p>
@@ -507,7 +507,7 @@ const Terms = () => {
               understood, and agree to be bound by these Terms and Conditions.
             </p>
             <p className="text-gray-500 text-xs mt-2">
-              © 2025 Regenta International. All rights reserved.
+              © 2025 Regent International. All rights reserved.
             </p>
           </div>
         </div>

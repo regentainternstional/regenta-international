@@ -19,7 +19,7 @@ const Navbar = () => {
         
         {/* Logo */}
         <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900">
-          <span className="text-blue-600 pr-1">Regenta</span>
+          <span className="text-blue-600 pr-1">Regent</span>
           <span className="text-gray-700 font-extrabold">International</span>
         </div>
 

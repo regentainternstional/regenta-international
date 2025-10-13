@@ -3,42 +3,42 @@ import whyImage from "../assets/girl.png";
 
 const faqs = [
   {
-    question: "How does RegentaInternational ensure the security of its software solutions?",
+    question: "How does RegentInternational ensure the security of its software solutions?",
     answer:
       "We implement advanced security protocols, encryption, and regular audits to safeguard all applications.",
   },
   {
-    question: "Can RegentaInternational customize its software solutions to fit our specific needs?",
+    question: "Can RegentInternational customize its software solutions to fit our specific needs?",
     answer:
       "Yes, all our solutions are highly customizable to meet your unique business requirements.",
   },
   {
-    question: "What industries does RegentaInternational Technologies specialize in serving?",
+    question: "What industries does RegentInternational Technologies specialize in serving?",
     answer:
       "We serve industries like healthcare, eCommerce, education, finance, logistics, and more.",
   },
   {
-    question: "Can RegentaInternational Technologies accommodate large-scale projects?",
+    question: "Can RegentInternational Technologies accommodate large-scale projects?",
     answer:
       "Absolutely. Our expert team can handle enterprise-level projects with scalability in mind.",
   },
   {
-    question: "How does RegentaInternational Technologies ensure the quality of its software solutions?",
+    question: "How does RegentInternational Technologies ensure the quality of its software solutions?",
     answer:
       "Through rigorous testing, continuous feedback loops, and quality assurance processes.",
   },
   {
-    question: "Can RegentaInternational Technologies integrate its software solutions with existing systems?",
+    question: "Can RegentInternational Technologies integrate its software solutions with existing systems?",
     answer:
       "Yes, our solutions are designed for seamless integration with your existing infrastructure.",
   },
   {
-    question: "What measures does RegentaInternational Technologies take to protect client data?",
+    question: "What measures does RegentInternational Technologies take to protect client data?",
     answer:
       "We use strict data protection policies, secure servers, and comply with GDPR and global data standards.",
   },
   {
-    question: "How does RegentaInternational Technologies approach project management?",
+    question: "How does RegentInternational Technologies approach project management?",
     answer:
       "We follow agile methodologies for efficient and transparent project management.",
   },
@@ -59,7 +59,7 @@ const FAQSection = () => {
             Frequently Asked <span className="text-blue-600">Questions</span>
           </h2>
           <p className="text-gray-600 mt-2">
-            Find answers to common queries about RegentaInternational Technologies and our services
+            Find answers to common queries about RegentInternational Technologies and our services
           </p>
         </div>
 

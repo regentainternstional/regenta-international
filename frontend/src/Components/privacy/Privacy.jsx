@@ -84,7 +84,7 @@ const Privacy = () => {
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Company Policy Norms
             </h1>
-            <p className="text-xl text-gray-600 mb-4">Regenta International</p>
+            <p className="text-xl text-gray-600 mb-4">Regent International</p>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@ const Privacy = () => {
           <div className="text-center mb-6">
             <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Welcome to Regenta International
+              Welcome to Regent International
             </h2>
           </div>
           <p className="text-gray-700 leading-relaxed text-lg">
@@ -166,7 +166,7 @@ const Privacy = () => {
               </h4>
               <ul className="list-disc list-inside space-y-2 text-gray-700 ml-4">
                 <li>
-                  Regenta International hires based on merit, skills, and
+                  Regent International hires based on merit, skills, and
                   cultural fit
                 </li>
                 <li>
@@ -179,7 +179,7 @@ const Privacy = () => {
                 </li>
                 <li>
                   All intellectual property created during employment or
-                  contractual work with Regenta International is the sole
+                  contractual work with Regent International is the sole
                   property of the company
                 </li>
               </ul>
@@ -368,7 +368,7 @@ const Privacy = () => {
                     protection regulations
                   </li>
                   <li>
-                    All intellectual property belongs to Regenta International.
+                    All intellectual property belongs to Regent International.
                   </li>
                   <li>Mandatory Non-Disclosure Agreement (NDA)</li>
                   <li>Unauthorized sharing may result in legal action</li>
@@ -505,7 +505,7 @@ const Privacy = () => {
             Policy Updates & Amendments
           </h3>
           <p className="text-gray-300 leading-relaxed max-w-3xl mx-auto">
-            By engaging with Regenta International, you agree to comply with
+            By engaging with Regent International, you agree to comply with
             these policies. We reserve the right to update these terms as
             required by evolving business or legal needs. Employees will be
             notified of any changes in a timely manner.
@@ -518,7 +518,7 @@ const Privacy = () => {
             Last updated: {new Date().toLocaleDateString()}
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            © 2024 Regenta International. All rights reserved.
+            © 2024 Regent International. All rights reserved.
           </p>
         </div>
       </div>

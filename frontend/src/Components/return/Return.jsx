@@ -75,7 +75,7 @@ const Return = () => {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Thank you for choosing{" "}
             <span className="font-semibold text-blue-600">
-              Regenta International
+              Regent International
             </span>{" "}
             for your IT and software service needs.
           </p>
@@ -265,7 +265,7 @@ const Return = () => {
               Policy.
             </p>
             <p className="text-gray-500 text-xs mt-2">
-              © 2025 Regenta International. All rights reserved.
+              © 2025 Regent International. All rights reserved.
             </p>
           </div>
         </div>

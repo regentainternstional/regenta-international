@@ -36,13 +36,13 @@ const HeroSection = () => {
         {/* Main Heading */}
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-gray-800 mb-4 sm:mb-6 leading-snug sm:leading-tight">
           Shape Your <br />
-          Business at <span className="text-blue-600">Regenta International</span>
+          Business at <span className="text-blue-600">Regent International</span>
         </h1>
 
         {/* Paragraph */}
         <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed max-w-3xl mx-auto">
           Welcome to our portfolio page, where we proudly showcase a diverse range of
-          projects that exemplify the quality and creativity of our work at Regenta International.
+          projects that exemplify the quality and creativity of our work at Regent International.
           Explore our featured projects to gain insights into our capabilities and discover
           how we can help bring your ideas to life.
         </p>

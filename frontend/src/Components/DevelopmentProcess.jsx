@@ -15,7 +15,7 @@ const DevelopmentProcess = () => {
         {/* Description */}
         <div className="text-gray-600 space-y-5 mt-8 max-w-3xl mx-auto">
           <p>
-            At RegentaInternational Technologies, our commitment to excellence shines through
+            At RegentInternational Technologies, our commitment to excellence shines through
             in our services. We believe in providing unparalleled experiences for
             both our clients and their customers.
           </p>

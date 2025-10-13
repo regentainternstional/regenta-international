@@ -12,9 +12,9 @@ const Footer = () => {
     <footer id="footer" className="bg-gray-100 text-gray-700">
       <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-10">
         <div>
-          <p>Regenta International</p>
+          <p>Regent International</p>
           <p className="text-sm">
-            RegentaInternational Technologies is a dynamic IT and software
+            RegentInternational Technologies is a dynamic IT and software
             company, dedicated to excellence in technology solutions.
           </p>
         </div>
@@ -87,7 +87,7 @@ const Footer = () => {
       </div>
 
       <div className="bg-blue-600 text-white text-center py-3 text-sm">
-        ©2025. Regenta International. All Rights Reserved.
+        ©2025. Regent International. All Rights Reserved.
       </div>
     </footer>
   );
