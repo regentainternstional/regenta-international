@@ -22,7 +22,8 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-bold mb-3">Contact Us</h3>
           <p className="text-sm">
-            <strong>Address:</strong> First Floor, 106 Plot No 3 Dilshad Garden O & P Block LSC Delhi 110095 Delhi Shahdara 
+            <strong>Address:</strong> First Floor, 106 Plot No 3 Dilshad Garden
+            O & P Block LSC Delhi 110095 Delhi Shahdara
           </p>
           <p className="text-sm mt-2">
             <strong>Phone:</strong> +91-7302622997
@@ -36,9 +37,14 @@ const Footer = () => {
           <h3 className="text-lg font-bold mb-3">Legal</h3>
           <ul className="text-sm space-y-2">
             <li>
-              <Link to="/privacy" className="hover:underline">
-                Privacy & Policy
-              </Link>
+              <a
+                href="/privacy-policy.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm transition-colors duration-200 underline-offset-2 hover:underline"
+              >
+                Privacy Policy
+              </a>
             </li>
             <li>
               <Link to="/terms" className="hover:underline">
