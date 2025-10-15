@@ -37,14 +37,9 @@ const Footer = () => {
           <h3 className="text-lg font-bold mb-3">Legal</h3>
           <ul className="text-sm space-y-2">
             <li>
-              <a
-                href="/privacy-policy.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm transition-colors duration-200 underline-offset-2 hover:underline"
-              >
+             <Link to="/privacy" className="hover:underline">
                 Privacy Policy
-              </a>
+              </Link>
             </li>
             <li>
               <Link to="/terms" className="hover:underline">

@@ -1,10 +1,11 @@
-  import express from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { dbConnect } from "./helpers/dbConnect.js";
 import Payment from "./models/Payment.js";
+import UserData from "./models/UserData.js";
 
 dotenv.config();
 
@@ -70,6 +71,7 @@ app.post("/api/verify-payment", async (req, res) => {
       razorpay_signature,
       user,
       amount,
+      userDataId,
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -100,7 +102,10 @@ app.post("/api/verify-payment", async (req, res) => {
         amount,
         status: "success",
       });
-
+      if (userDataId) {
+        await UserData.findByIdAndUpdate(userDataId, { processed: true });
+        console.log(`User data ${userDataId} marked as processed`);
+      }
       console.log("Payment verified & saved to DB");
 
       res.json({
@@ -140,6 +145,23 @@ app.get("/api/payment/:paymentId", async (req, res) => {
       error: "Failed to fetch payment details",
       details: error.message,
     });
+  }
+});
+
+app.get("/api/user-data/next", async (req, res) => {
+  try {
+    const userData = await UserData.findOne({ processed: false }).sort({
+      createdAt: 1,
+    });
+
+    if (!userData) {
+      return res.json({ success: true, data: null });
+    }
+
+    res.json({ success: true, data: userData });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Failed to fetch user data" });
   }
 });
 
