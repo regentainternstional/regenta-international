@@ -9,11 +9,13 @@ const paymentSchema = new mongoose.Schema({
   razorpay_order_id: String,
   razorpay_payment_id: String,
   razorpay_signature: String,
+  sabpaisa_txn_id:String,
   amount: Number, // Optional: if you want to store the amount
   status: {
     type: String,
     default: "success",
   },
+  paymentGateway: { type: String, default: "sabpaisa" },
   createdAt: {
     type: Date,
     default: Date.now,

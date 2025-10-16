@@ -226,7 +226,7 @@ const Return = () => {
                 <Contact className="w-5 h-5 text-blue-600" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">
-                4. Contact Us
+                5. Contact Us
               </h2>
             </div>
             <p className="text-gray-700 leading-relaxed mb-4">
