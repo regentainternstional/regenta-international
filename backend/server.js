@@ -23,27 +23,102 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || "your_secret_key_here",
 });
 
-const encryptSabPaisa = (data) => {
-  const key = Buffer.from(process.env.SABPAISA_AUTH_KEY, "utf8").slice(0, 16);
-  const iv = Buffer.from(process.env.SABPAISA_AUTH_IV, "utf8").slice(0, 16);
+// const encryptSabPaisa = (data) => {
+//   const key = Buffer.from(process.env.SABPAISA_AUTH_KEY, "utf8").slice(0, 16);
+//   const iv = Buffer.from(process.env.SABPAISA_AUTH_IV, "utf8").slice(0, 16);
 
-  const cipher = crypto.createCipheriv("aes-128-cbc", key, iv);
-  let encrypted = cipher.update(data, "utf8", "base64");
-  encrypted += cipher.final("base64");
-  return encrypted;
+//   const cipher = crypto.createCipheriv("aes-128-cbc", key, iv);
+//   let encrypted = cipher.update(data, "utf8", "base64");
+//   encrypted += cipher.final("base64");
+//   return encrypted;
+// };
+
+// const decryptSabPaisa = (encryptedData) => {
+//   const key = Buffer.from(process.env.SABPAISA_AUTH_KEY, "utf8").slice(0, 16);
+//   const iv = Buffer.from(process.env.SABPAISA_AUTH_IV, "utf8").slice(0, 16);
+
+//   const decipher = crypto.createDecipheriv("aes-128-cbc", key, iv);
+//   let decrypted = decipher.update(encryptedData, "base64", "utf8");
+//   decrypted += decipher.final("utf8");
+//   return decrypted;
+// };
+
+const encryptSabPaisa = (data) => {
+  // Decode base64 keys
+  const aesKey = Buffer.from(process.env.SABPAISA_AUTH_KEY, "base64");
+  const hmacKey = Buffer.from(process.env.SABPAISA_AUTH_IV, "base64");
+
+  // Generate random IV (12 bytes for GCM)
+  const iv = crypto.randomBytes(12);
+
+  // Create cipher with AES-256-GCM
+  const cipher = crypto.createCipheriv("aes-256-gcm", aesKey, iv);
+
+  // Encrypt the data
+  let encrypted = cipher.update(data, "utf8");
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+  // Get authentication tag (16 bytes)
+  const tag = cipher.getAuthTag();
+
+  // Concatenate: IV + encrypted + tag
+  const encryptedMessage = Buffer.concat([iv, encrypted, tag]);
+
+  // Generate HMAC-SHA384 of the encrypted message
+  const hmac = crypto.createHmac("sha384", hmacKey);
+  hmac.update(encryptedMessage);
+  const hmacDigest = hmac.digest();
+
+  // Final output: HMAC + encrypted message (as uppercase hex)
+  const result = Buffer.concat([hmacDigest, encryptedMessage]);
+  return result.toString("hex").toUpperCase();
 };
 
 const decryptSabPaisa = (encryptedData) => {
-  const key = Buffer.from(process.env.SABPAISA_AUTH_KEY, "utf8").slice(0, 16);
-  const iv = Buffer.from(process.env.SABPAISA_AUTH_IV, "utf8").slice(0, 16);
+  // Decode base64 keys
+  const aesKey = Buffer.from(process.env.SABPAISA_AUTH_KEY, "base64");
+  const hmacKey = Buffer.from(process.env.SABPAISA_AUTH_IV, "base64");
 
-  const decipher = crypto.createDecipheriv("aes-128-cbc", key, iv);
-  let decrypted = decipher.update(encryptedData, "base64", "utf8");
+  // Convert hex string to buffer
+  const encryptedBuffer = Buffer.from(encryptedData, "hex");
+
+  // Extract HMAC (first 48 bytes for SHA384)
+  const receivedHmac = encryptedBuffer.subarray(0, 48);
+  const encryptedMessage = encryptedBuffer.subarray(48);
+
+  // Verify HMAC
+  const hmac = crypto.createHmac("sha384", hmacKey);
+  hmac.update(encryptedMessage);
+  const calculatedHmac = hmac.digest();
+
+  // Timing-safe comparison
+  if (!crypto.timingSafeEqual(receivedHmac, calculatedHmac)) {
+    throw new Error("HMAC verification failed");
+  }
+
+  // Extract IV (12 bytes)
+  const iv = encryptedMessage.subarray(0, 12);
+  // Extract tag (last 16 bytes)
+  const tag = encryptedMessage.subarray(encryptedMessage.length - 16);
+  // Extract ciphertext (middle portion)
+  const ciphertext = encryptedMessage.subarray(
+    12,
+    encryptedMessage.length - 16
+  );
+
+  // Create decipher with AES-256-GCM
+  const decipher = crypto.createDecipheriv("aes-256-gcm", aesKey, iv);
+  decipher.setAuthTag(tag);
+
+  // Decrypt the data
+  let decrypted = decipher.update(ciphertext, undefined, "utf8");
   decrypted += decipher.final("utf8");
+
   return decrypted;
 };
 
 // Routes
+
 app.get("/", (req, res) => {
   res.json({ message: "regent Backend Server is running!" });
 });
@@ -152,34 +227,43 @@ app.post("/api/verify-payment", async (req, res) => {
 
 app.post("/api/sabpaisa/create-payment", async (req, res) => {
   try {
-    const { amount, name, email, phone, userDataId } = req.body
+    const { amount, name, email, phone, userDataId } = req.body;
 
     if (!amount || !name || !email) {
-      return res.status(400).json({ error: "Amount, name, and email are required" })
+      return res
+        .status(400)
+        .json({ error: "Amount, name, and email are required" });
     }
 
     // Generate unique transaction ID
-    const txnId = `TXN${Date.now()}`
+    const txnId = `TXN${Date.now()}`;
 
-    const payerPhone = phone || "9999999999"
-    const payerAddress = "NA"
-    const transData = new Date().toISOString()
+    const payerPhone = phone || "9999999999";
+    const payerAddress = "NA";
+    const transData = new Date().toISOString();
 
     const dataString =
       `payerName=${name}&payerEmail=${email}&payerMobile=${payerPhone}` +
-      `&clientTxnId=${txnId}&amount=${Number.parseFloat(amount).toFixed(2)}&clientCode=${process.env.SABPAISA_CLIENT_CODE}` +
+      `&clientTxnId=${txnId}&amount=${Number.parseFloat(amount).toFixed(
+        2
+      )}&clientCode=${process.env.SABPAISA_CLIENT_CODE}` +
       `&transUserName=${process.env.SABPAISA_USERNAME}&transUserPassword=${process.env.SABPAISA_PASSWORD}` +
-      `&callbackUrl=${process.env.SABPAISA_CALLBACK_URL || `http://localhost:5000/api/sabpaisa/callback`}` +
-      `&channelId=W&mcc=6012&transData=${transData}&udf1=${userDataId || ""}&udf2=`
+      `&callbackUrl=${
+        process.env.SABPAISA_CALLBACK_URL ||
+        `http://localhost:5000/api/sabpaisa/callback`
+      }` +
+      `&channelId=W&mcc=6012&transData=${transData}&udf1=${
+        userDataId || ""
+      }&udf2=`;
 
-    console.log("[v0] Payment data string before encryption:", dataString)
-    console.log("[v0] Data string length:", dataString.length)
+    console.log("[v0] Payment data string before encryption:", dataString);
+    console.log("[v0] Data string length:", dataString.length);
 
     // Encrypt the data
-    const encData = encryptSabPaisa(dataString)
+    const encData = encryptSabPaisa(dataString);
 
-    console.log("[v0] Encrypted data:", encData)
-    console.log("[v0] Encrypted data length:", encData.length)
+    console.log("[v0] Encrypted data:", encData);
+    console.log("[v0] Encrypted data length:", encData.length);
 
     res.json({
       success: true,
@@ -187,39 +271,39 @@ app.post("/api/sabpaisa/create-payment", async (req, res) => {
       encData,
       clientCode: process.env.SABPAISA_CLIENT_CODE,
       transactionId: txnId,
-    })
+    });
   } catch (error) {
-    console.error("[v0] Error creating SabPaisa payment:", error)
+    console.error("[v0] Error creating SabPaisa payment:", error);
     res.status(500).json({
       error: "Failed to create payment",
       details: error.message,
-    })
+    });
   }
-})
+});
 
 app.post("/api/sabpaisa/callback", async (req, res) => {
   try {
-    const { encData } = req.body
+    const { encData } = req.body;
 
     if (!encData) {
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
     }
 
     // Decrypt the response
-    const decryptedData = decryptSabPaisa(encData)
-    console.log("[v0] Decrypted callback data:", decryptedData)
+    const decryptedData = decryptSabPaisa(encData);
+    console.log("[v0] Decrypted callback data:", decryptedData);
 
     // Parse query string format response
-    const params = new URLSearchParams(decryptedData)
-    const status = params.get("status")
-    const transactionId = params.get("clientTxnId")
-    const amount = params.get("amount")
-    const payerName = params.get("payerName")
-    const payerEmail = params.get("payerEmail")
-    const payerMobile = params.get("payerMobile")
-    const sabpaisaTxnId = params.get("sabpaisaTxnId")
-    const bankTxnId = params.get("bankTxnId")
-    const udf1 = params.get("udf1")
+    const params = new URLSearchParams(decryptedData);
+    const status = params.get("status");
+    const transactionId = params.get("clientTxnId");
+    const amount = params.get("amount");
+    const payerName = params.get("payerName");
+    const payerEmail = params.get("payerEmail");
+    const payerMobile = params.get("payerMobile");
+    const sabpaisaTxnId = params.get("sabpaisaTxnId");
+    const bankTxnId = params.get("bankTxnId");
+    const udf1 = params.get("udf1");
 
     console.log("[v0] Payment callback received:", {
       transactionId,
@@ -227,7 +311,7 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
       amount,
       payerName,
       payerEmail,
-    })
+    });
 
     // Check if payment was successful
     if (status === "SUCCESS") {
@@ -244,36 +328,40 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
         amount: Number.parseFloat(amount),
         status: "success",
         paymentGateway: "sabpaisa",
-      })
+      });
 
       // Mark user data as processed if userDataId exists
       if (udf1) {
-        await UserData.findByIdAndUpdate(udf1, { processed: true })
-        console.log(`[v0] User data ${udf1} marked as processed`)
+        await UserData.findByIdAndUpdate(udf1, { processed: true });
+        console.log(`[v0] User data ${udf1} marked as processed`);
       }
 
       // Redirect to success page
-      res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${transactionId}`)
+      res.redirect(
+        `${process.env.FRONTEND_URL}/payment/success?txnId=${transactionId}`
+      );
     } else {
       // Redirect to failure page
-      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}`)
+      res.redirect(
+        `${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}`
+      );
     }
   } catch (error) {
-    console.error("[v0] Error processing SabPaisa callback:", error)
-    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+    console.error("[v0] Error processing SabPaisa callback:", error);
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
   }
-})
+});
 
 app.get("/api/sabpaisa/verify/:transactionId", async (req, res) => {
   try {
-    const { transactionId } = req.params
+    const { transactionId } = req.params;
 
     const payment = await Payment.findOne({
       razorpay_order_id: transactionId,
-    })
+    });
 
     if (!payment) {
-      return res.json({ success: false, message: "Payment not found" })
+      return res.json({ success: false, message: "Payment not found" });
     }
 
     res.json({
@@ -283,30 +371,30 @@ app.get("/api/sabpaisa/verify/:transactionId", async (req, res) => {
         amount: payment.amount,
         user: payment.user,
       },
-    })
+    });
   } catch (error) {
-    console.error("Error verifying payment:", error)
-    res.status(500).json({ error: "Failed to verify payment" })
+    console.error("Error verifying payment:", error);
+    res.status(500).json({ error: "Failed to verify payment" });
   }
-})
+});
 
 app.get("/api/payment/:paymentId", async (req, res) => {
   try {
-    const { paymentId } = req.params
-    const payment = await razorpay.payments.fetch(paymentId)
+    const { paymentId } = req.params;
+    const payment = await razorpay.payments.fetch(paymentId);
 
     res.json({
       success: true,
       payment,
-    })
+    });
   } catch (error) {
-    console.error("Error fetching payment:", error)
+    console.error("Error fetching payment:", error);
     res.status(500).json({
       error: "Failed to fetch payment details",
       details: error.message,
-    })
+    });
   }
-})
+});
 
 app.get("/api/user-data/next", async (req, res) => {
   try {
