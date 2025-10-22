@@ -21,7 +21,7 @@ We may also gather data using cookies and tracking technologies that record user
       icon: Users,
       content: `When you communicate with us through our website, email, or social media platforms, we may ask for personal and business information such as your full name, email ID, mobile number, business name, country, and service requirements. If you purchase any service or product directly through our website, you may be required to provide payment details, which are securely processed through our authorized payment gateway partners.
 
-Regenta International does not store or retain any credit or debit card details on its servers. All payment transactions are handled with secure encryption through third-party payment processors that comply with data security standards.
+Regent International does not store or retain any credit or debit card details on its servers. All payment transactions are handled with secure encryption through third-party payment processors that comply with data security standards.
 
 We may also collect communication records, project files, proposals, or correspondence exchanged during project discussions to better understand your needs and provide relevant solutions. All such information is handled with strict confidentiality.`
     },
@@ -37,7 +37,7 @@ This data helps us understand how our website is being accessed, identify usage 
       id: 'thirdparty',
       title: 'Information from Third-Party Platforms',
       icon: Users,
-      content: `Regenta International maintains official profiles on social media and digital marketing platforms including Facebook, LinkedIn, Instagram, X (Twitter), and YouTube. When you interact with us through these platforms—such as liking, following, commenting, or messaging—we may collect publicly available information including your profile name, username, and any other details visible based on your privacy settings.
+      content: `Regent International maintains official profiles on social media and digital marketing platforms including Facebook, LinkedIn, Instagram, X (Twitter), and YouTube. When you interact with us through these platforms—such as liking, following, commenting, or messaging—we may collect publicly available information including your profile name, username, and any other details visible based on your privacy settings.
 
 We use this data to engage with our audience, respond to inquiries, and improve communication strategies. Our marketing team may also collect publicly available business information from professional networks or directories after you have contacted us to ensure we can tailor our services to your business needs.`
     },
@@ -45,7 +45,7 @@ We use this data to engage with our audience, respond to inquiries, and improve 
       id: 'use',
       title: 'How We Use the Collected Information',
       icon: CheckCircle,
-      content: `The information collected by Regenta International is used to deliver, enhance, and personalize our services. We use your contact information to respond to your inquiries, provide project estimates, send proposals, or offer support. Our business development team may use your data to understand your business requirements and recommend suitable digital solutions.
+      content: `The information collected by Regent International is used to deliver, enhance, and personalize our services. We use your contact information to respond to your inquiries, provide project estimates, send proposals, or offer support. Our business development team may use your data to understand your business requirements and recommend suitable digital solutions.
 
 We also use the collected data for internal review, record-keeping, analytics, and service improvement purposes. Additionally, we may use your email address to send updates about our services, newsletters, marketing promotions, or event notifications that we believe could be beneficial to your business.
 
@@ -55,17 +55,17 @@ You may opt out of these communications at any time by clicking the "unsubscribe
       id: 'sharing',
       title: 'Sharing of Information',
       icon: Users,
-      content: `Regenta International respects the confidentiality of all client information. We do not share your data with unrelated third parties except under specific circumstances. Your data may be shared with our subsidiary companies, partner agencies, or affiliates for the purpose of service delivery, marketing coordination, or technical support.
+      content: `Regent International respects the confidentiality of all client information. We do not share your data with unrelated third parties except under specific circumstances. Your data may be shared with our subsidiary companies, partner agencies, or affiliates for the purpose of service delivery, marketing coordination, or technical support.
 
 Additionally, we may share limited data with trusted third-party service providers such as cloud hosting platforms, CRM tools, or marketing automation partners who assist us in maintaining and improving our operations. All such partners are bound by confidentiality agreements and data protection obligations.
 
-We may also share your information if required by law, court order, or government regulation, or if necessary to protect the legal rights, property, or safety of Regenta International, its clients, or employees.`
+We may also share your information if required by law, court order, or government regulation, or if necessary to protect the legal rights, property, or safety of Regent International, its clients, or employees.`
     },
     {
       id: 'rights',
       title: 'Your Rights and Choices',
       icon: CheckCircle,
-      content: `You have full control over your personal data shared with Regenta International. You have the right to access, correct, update, or request deletion of your personal information at any time. If you wish to opt out of receiving marketing or promotional communications, you can click the unsubscribe link provided in our emails or send a request to info@regentainternational.in with the subject "Opt-Out."
+      content: `You have full control over your personal data shared with Regent International. You have the right to access, correct, update, or request deletion of your personal information at any time. If you wish to opt out of receiving marketing or promotional communications, you can click the unsubscribe link provided in our emails or send a request to info@regentainternational.in with the subject "Opt-Out."
 
 You may also request details about the data we hold about you, restrict its processing, or withdraw consent for its use where applicable. We will comply with such requests in accordance with applicable data protection laws, provided there are no legal or contractual obligations that require us to retain the data.`
     },
@@ -93,7 +93,7 @@ While we follow industry best practices to protect your data, no online system c
             Privacy Policy
           </h1>
           <p className="text-blue-100 text-center text-lg sm:text-xl max-w-3xl mx-auto">
-            Regenta International is committed to protecting your privacy and personal information
+            Regent International is committed to protecting your privacy and personal information
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 text-sm">
             <div className="flex items-center gap-2">
@@ -114,10 +114,10 @@ While we follow industry best practices to protect your data, no online system c
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-10 mb-8 border-l-4 border-blue-600">
           <p className="text-gray-700 leading-relaxed mb-4">
-            This Privacy Policy applies to all visitors, users, and clients of Regenta International ("Regenta," "we," "us," or "our") and governs how we collect, use, store, and protect personal information across all our websites, applications, and online services. By using our website or engaging with any of our services, you agree to the terms outlined in this Privacy Policy.
+            This Privacy Policy applies to all visitors, users, and clients of Regent International ("Regent," "we," "us," or "our") and governs how we collect, use, store, and protect personal information across all our websites, applications, and online services. By using our website or engaging with any of our services, you agree to the terms outlined in this Privacy Policy.
           </p>
           <p className="text-gray-700 leading-relaxed">
-            Regenta International provides a range of IT and digital solutions, including website and mobile application development, social media management, graphic design, branding, and digital marketing services. This policy describes how we handle personal data collected through our website, client interactions, and digital communication platforms.
+            Regent International provides a range of IT and digital solutions, including website and mobile application development, social media management, graphic design, branding, and digital marketing services. This policy describes how we handle personal data collected through our website, client interactions, and digital communication platforms.
           </p>
         </div>
 
@@ -175,7 +175,7 @@ While we follow industry best practices to protect your data, no online system c
           <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl shadow-lg p-6 sm:p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">Children's Privacy</h3>
             <p className="text-blue-100 leading-relaxed">
-              Our website and services are not directed towards individuals under the age of 16. Regenta International does not knowingly collect personal data from minors. If we become aware that we have inadvertently received such information, we will take immediate steps to delete it from our systems.
+              Our website and services are not directed towards individuals under the age of 16. Regent International does not knowingly collect personal data from minors. If we become aware that we have inadvertently received such information, we will take immediate steps to delete it from our systems.
             </p>
           </div>
         </div>
@@ -184,7 +184,7 @@ While we follow industry best practices to protect your data, no online system c
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mt-8 border-t-4 border-blue-600">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">Policy Updates</h3>
           <p className="text-gray-700 leading-relaxed">
-            Regenta International reserves the right to modify or update this Privacy Policy at any time without prior notice. Any revisions will be published on our website with an updated "Effective Date." We encourage you to review this policy periodically to stay informed about how we protect your information.
+            Regent International reserves the right to modify or update this Privacy Policy at any time without prior notice. Any revisions will be published on our website with an updated "Effective Date." We encourage you to review this policy periodically to stay informed about how we protect your information.
           </p>
         </div>
 
@@ -207,7 +207,7 @@ While we follow industry best practices to protect your data, no online system c
 
       {/* Footer */}
       <div className="bg-gray-900 text-gray-400 py-8 px-4 text-center mt-16">
-        <p>© 2025 Regenta International. All rights reserved.</p>
+        <p>© 2025 Regent International. All rights reserved.</p>
       </div>
 
       <style jsx>{`
