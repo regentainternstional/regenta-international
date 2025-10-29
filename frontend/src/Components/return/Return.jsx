@@ -217,7 +217,7 @@ const Return = () => {
               <span className="font-semibold text-blue-600">
                 3 business days
               </span>
-              , and we will review and resolve the issue appropriately.
+              , and we will review and resolve the issue appropriately. if refund is approved refund amount is credited to original mode of payment within 7-10 business
             </p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-blue-100 p-6 sm:p-8">
