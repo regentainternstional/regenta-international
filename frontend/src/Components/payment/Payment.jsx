@@ -194,21 +194,42 @@ export default function Payment() {
             order_id: orderId,
           }
         );
+
         if (response.data.success) {
           const form = document.createElement("form");
           form.method = "POST";
           form.action = response.data.paymentUrl;
 
-          // Add all Airpay required fields
+          // Add Airpay fields: mercid, data (encrypted), privatekey, checksum
           const paymentData = response.data.paymentData;
 
-          Object.keys(paymentData).forEach((key) => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = key;
-            input.value = paymentData[key];
-            form.appendChild(input);
-          });
+          // Add merchant ID
+          const mercidInput = document.createElement("input");
+          mercidInput.type = "hidden";
+          mercidInput.name = "mercid";
+          mercidInput.value = paymentData.mercid;
+          form.appendChild(mercidInput);
+
+          // Add encrypted data
+          const dataInput = document.createElement("input");
+          dataInput.type = "hidden";
+          dataInput.name = "data";
+          dataInput.value = paymentData.data;
+          form.appendChild(dataInput);
+
+          // Add private key
+          const privatekeyInput = document.createElement("input");
+          privatekeyInput.type = "hidden";
+          privatekeyInput.name = "privatekey";
+          privatekeyInput.value = paymentData.privatekey;
+          form.appendChild(privatekeyInput);
+
+          // Add checksum
+          const checksumInput = document.createElement("input");
+          checksumInput.type = "hidden";
+          checksumInput.name = "checksum";
+          checksumInput.value = paymentData.checksum;
+          form.appendChild(checksumInput);
 
           document.body.appendChild(form);
           form.submit();

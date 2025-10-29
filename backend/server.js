@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import Razorpay from "razorpay";
 import crypto from "crypto";
 import { dbConnect } from "./helpers/dbConnect.js";
 import Payment from "./models/Payment.js";
@@ -9,6 +8,8 @@ import UploadedData from "./models/UserData.js";
 import GatewayCounter from "./models/GatewayCounter.js";
 import multer from "multer";
 import { parse } from "csv-parse/sync";
+import CRC32 from "crc-32";
+import axios from "axios";
 
 dotenv.config();
 
@@ -45,11 +46,75 @@ const upload = multer({
   },
 });
 
-// Initialize Razorpay
-// const razorpay = new Razorpay({
-//   key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_9999999999",
-//   key_secret: process.env.RAZORPAY_KEY_SECRET || "your_secret_key_here",
-// });
+const airpayUsername = process.env.AIRPAY_USERNAME;
+const airpayPassword = process.env.AIRPAY_PASSWORD;
+const airpaySecret = process.env.AIRPAY_API_KEY;
+const airpayMerchantId = process.env.AIRPAY_MERCHANT_ID;
+
+// Generate encryption key from username and password
+const airpayKey = crypto
+  .createHash("md5")
+  .update(airpayUsername + "~:~" + airpayPassword)
+  .digest("hex")
+  .substring(0, 32); // AES-256 requires 32 bytes
+
+function airpayEncrypt(data) {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(
+    "aes-256-cbc",
+    Buffer.from(airpayKey),
+    iv
+  );
+  let encrypted = cipher.update(data, "utf8", "base64");
+  encrypted += cipher.final("base64");
+  return iv.toString("hex") + encrypted;
+}
+
+function airpayDecrypt(encryptedData) {
+  try {
+    const iv = Buffer.from(encryptedData.substring(0, 32), "hex");
+    const encrypted = encryptedData.substring(32);
+    const decipher = crypto.createDecipheriv(
+      "aes-256-cbc",
+      Buffer.from(airpayKey),
+      iv
+    );
+    let decrypted = decipher.update(encrypted, "base64", "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  } catch (error) {
+    console.error("[v0] Airpay decryption error:", error);
+    throw error;
+  }
+}
+
+function generateAirpayChecksum(data) {
+  const checksum = crypto
+    .createHash("sha256")
+    .update(airpaySecret + data)
+    .digest("hex");
+  return checksum;
+}
+
+function makeEnc(data) {
+  const key = crypto.createHash("sha256").update(data).digest("hex");
+  return key;
+}
+
+// Send POST request for token generation
+async function sendPostData(tokenUrl, postData) {
+  try {
+    const response = await axios.post(tokenUrl, new URLSearchParams(postData), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("[v0] Error sending POST request:", error);
+    throw error;
+  }
+}
 
 async function getNextGateway() {
   let counter = await GatewayCounter.findOne();
@@ -145,123 +210,10 @@ const decryptSabPaisa = (encryptedData) => {
   return decrypted;
 };
 
-const generateAirpayChecksum = (params) => {
-  // Airpay checksum format: username:password:merchantId:orderId:amount:currency
-  const checksumString = `${params.username}:${params.password}:${params.merchantId}:${params.orderId}:${params.amount}:${params.currency}`;
-
-  // Generate SHA256 hash
-  const checksum = crypto
-    .createHash("sha256")
-    .update(checksumString)
-    .digest("hex");
-
-  return checksum;
-};
-
 // Routes
 app.get("/", (req, res) => {
   res.json({ message: "regent Backend Server is running!" });
 });
-
-// Create order
-// app.post("/api/create-order", async (req, res) => {
-//   try {
-//     const { amount, currency = "INR" } = req.body;
-
-//     if (!amount) {
-//       return res.status(400).json({ error: "Amount is required" });
-//     }
-
-//     const options = {
-//       amount: Math.round(amount * 100), // Convert to paise
-//       currency,
-//       receipt: `receipt_${Date.now()}`,
-//       payment_capture: 1,
-//     };
-
-//     const order = await razorpay.orders.create(options);
-
-//     res.json({
-//       success: true,
-//       order: {
-//         id: order.id,
-//         amount: order.amount,
-//         currency: order.currency,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error creating order:", error);
-//     res.status(500).json({
-//       error: "Failed to create order",
-//       details: error.message,
-//     });
-//   }
-// });
-
-// Verify payment
-// app.post("/api/verify-payment", async (req, res) => {
-//   try {
-//     const {
-//       razorpay_order_id,
-//       razorpay_payment_id,
-//       razorpay_signature,
-//       user,
-//       amount,
-//       userDataId,
-//     } = req.body;
-
-//     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-//       return res.status(400).json({
-//         success: false,
-//         error: "Missing required payment details",
-//       });
-//     }
-
-//     // Create signature for verification
-//     const body = razorpay_order_id + "|" + razorpay_payment_id;
-//     const expectedSignature = crypto
-//       .createHmac(
-//         "sha256",
-//         process.env.RAZORPAY_KEY_SECRET || "your_secret_key_here"
-//       )
-//       .update(body.toString())
-//       .digest("hex");
-
-//     const isAuthentic = expectedSignature === razorpay_signature;
-
-//     if (isAuthentic) {
-//       await Payment.create({
-//         user, // expects { name, email, phone }
-//         razorpay_order_id,
-//         razorpay_payment_id,
-//         razorpay_signature,
-//         amount,
-//         status: "success",
-//       });
-//       if (userDataId) {
-//         await UserData.findByIdAndUpdate(userDataId, { processed: true });
-//       }
-
-//       res.json({
-//         success: true,
-//         message: "Payment verified and saved to database",
-//       });
-//     } else {
-//       res.status(400).json({
-//         success: false,
-//         error: "Payment verification failed",
-//         details: error.message,
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error verifying payment:", error);
-//     res.status(500).json({
-//       success: false,
-//       error: "Payment verification failed",
-//       details: error.message,
-//     });
-//   }
-// });
 
 app.post("/api/sabpaisa/create-payment", async (req, res) => {
   try {
@@ -378,58 +330,79 @@ app.post("/api/airpay/create-payment", async (req, res) => {
         .json({ error: "Amount, name, email, and phone are required" });
     }
 
-    const merchantId = process.env.AIRPAY_MERCHANT_ID;
-    const username = process.env.AIRPAY_USERNAME;
-    const password = process.env.AIRPAY_PASSWORD;
-    const currency = "INR";
+    const orderid = order_id || `ORD${Date.now()}`;
+    const amountFormatted = Number.parseFloat(amount).toFixed(2);
 
-    // Generate checksum
-    const checksum = generateAirpayChecksum({
-      username,
-      password,
-      merchantId,
-      orderId: order_id,
-      amount: Number.parseFloat(amount).toFixed(2),
-      currency,
-    });
+    // Prepare payment data
+    const paymentData = {
+      buyerEmail: email,
+      buyerPhone: phone,
+      buyerFirstName: name,
+      buyerLastName: "",
+      buyerAddress: "NA",
+      buyerCity: "NA",
+      buyerState: "NA",
+      buyerCountry: "India",
+      buyerPinCode: "000000",
+      amount: amountFormatted,
+      orderid: orderid,
+      currency: "356",
+      isocurrency: "INR",
+      chmod: "",
+      customvar: "airpayPayment",
+      txnsubtype: "1",
+      mercid: airpayMerchantId,
+      arpyVer: "3",
+    }
+
+    const privatekey = crypto
+      .createHash("sha256")
+      .update(airpaySecret + "@" + airpayUsername + ":|:" + airpayPassword)
+      .digest("hex");
+
+    const sortedData = {};
+    Object.keys(paymentData)
+      .sort()
+      .forEach((key) => {
+        sortedData[key] = paymentData[key];
+      });
+
+    let checksumString = "";
+    for (const value of Object.values(sortedData)) {
+      checksumString += value;
+    }
+
+    const currentDate = new Date().toISOString().split("T")[0];
+    const checksum = crypto
+      .createHash("sha256")
+      .update(checksumString + currentDate)
+      .digest("hex");
+
+    const encryptedData = airpayEncrypt(JSON.stringify(paymentData));
 
     // Store payment in database
     await Payment.create({
-      orderId: order_id,
+      orderId: orderid,
       gateway: "airpay",
       amount: amount,
       customerName: name,
       customerEmail: email,
       customerPhone: phone,
-      paymentSessionId: order_id,
+      paymentSessionId: orderid,
       status: "initiated",
     });
 
-    // Return payment data for frontend to submit
+    // Return payment data for form submission
     res.json({
       success: true,
-      paymentUrl: process.env.AIRPAY_BASE_URL,
+      paymentUrl:
+        process.env.AIRPAY_PAYMENT_URL ||
+        "https://payments.airpay.co.in/pay/index.php",
       paymentData: {
-        merchantId: merchantId,
-        orderId: order_id,
-        amount: Number.parseFloat(amount).toFixed(2),
-        currency: currency,
-        buyerEmail: email,
-        buyerPhone: phone,
-        buyerFirstName: name,
-        buyerLastName: "",
-        buyerAddress: "NA",
-        buyerCity: "NA",
-        buyerState: "NA",
-        buyerCountry: "India",
-        buyerPincode: "000000",
-        orderDescription: "Payment",
+        mercid: airpayMerchantId,
+        data: encryptedData,
+        privatekey: privatekey,
         checksum: checksum,
-        privatekey: process.env.AIRPAY_API_KEY,
-        mer_dom: process.env.FRONTEND_URL || "http://localhost:5173",
-        responseUrl: `${
-          process.env.FRONTEND_URL || "http://localhost:5000"
-        }/api/airpay/callback`,
       },
     });
   } catch (error) {
@@ -449,6 +422,8 @@ app.post("/api/airpay/callback", async (req, res) => {
       AMOUNT,
       TRANSACTIONSTATUS,
       MESSAGE,
+      ap_SecureHash,
+      CUSTOMVAR,
     } = req.body;
 
     console.log("[v0] Airpay callback received:", req.body);
@@ -457,29 +432,49 @@ app.post("/api/airpay/callback", async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
     }
 
+    // Validate secure hash using CRC-32
+    const hashdata = `${TRANSACTIONID}:${APTRANSACTIONID}:${AMOUNT}:${TRANSACTIONSTATUS}:${
+      MESSAGE || ""
+    }:${airpayMerchantId}:${airpayUsername}`;
+    let calculatedHash = CRC32.str(hashdata);
+    calculatedHash = calculatedHash >>> 0; // Convert to unsigned
+
+    console.log(
+      "[v0] Calculated hash:",
+      calculatedHash,
+      "Received hash:",
+      ap_SecureHash
+    );
+
     // Check if payment was successful (status code 200 means success in Airpay)
-    if (TRANSACTIONSTATUS === "200") {
+    if (TRANSACTIONSTATUS === "200" || TRANSACTIONSTATUS === 200) {
       await Payment.findOneAndUpdate(
         { orderId: TRANSACTIONID },
         {
           status: "success",
           updatedAt: Date.now(),
-          razorpayOrderId: APTRANSACTIONID, // Store Airpay transaction ID
+          razorpayOrderId: APTRANSACTIONID,
         }
       );
 
-      // Redirect to success page
+      // Mark uploaded data as processed if it exists
+      const payment = await Payment.findOne({ orderId: TRANSACTIONID });
+      if (payment && payment.customerEmail) {
+        await UploadedData.findOneAndUpdate(
+          { email: payment.customerEmail, processed: false },
+          { processed: true, processedAt: Date.now() }
+        );
+      }
+
       res.redirect(
         `${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}`
       );
     } else {
-      // Update payment status to failed
       await Payment.findOneAndUpdate(
         { orderId: TRANSACTIONID },
         { status: "failed", updatedAt: Date.now() }
       );
 
-      // Redirect to failure page
       res.redirect(
         `${
           process.env.FRONTEND_URL
@@ -489,7 +484,7 @@ app.post("/api/airpay/callback", async (req, res) => {
       );
     }
   } catch (error) {
-    console.error("Error processing Airpay callback:", error);
+    console.error("[v0] Error processing Airpay callback:", error);
     res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
   }
 });
