@@ -183,6 +183,50 @@ export default function Payment() {
           setGeneralError("Failed to initiate payment. Please try again.");
           setLoading(false);
         }
+      } else if (gateway === "airpay") {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/airpay/create-payment`,
+          {
+            amount: Number.parseFloat(formData.amount),
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            order_id: orderId,
+          }
+        );
+        if (response.data.success) {
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = response.data.paymentUrl;
+
+          // Add all Airpay required fields
+          const paymentData = response.data.paymentData;
+
+          Object.keys(paymentData).forEach((key) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = paymentData[key];
+            form.appendChild(input);
+          });
+
+          document.body.appendChild(form);
+          form.submit();
+
+          if (autofillDataId) {
+            await fetch(
+              `${import.meta.env.VITE_BACKEND_API}/mark-data-processed`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ dataId: autofillDataId }),
+              }
+            );
+          }
+        } else {
+          setGeneralError("Failed to initiate payment. Please try again.");
+          setLoading(false);
+        }
       }
     } catch (error) {
       console.error("Payment error:", error);

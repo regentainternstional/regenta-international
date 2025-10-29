@@ -30,7 +30,7 @@ const paymentSchema = new mongoose.Schema({
   orderId: { type: String, required: true, unique: true },
   gateway: {
     type: String,
-    enum: ["sabpaisa", "cashfree", "razorpay"],
+    enum: ["sabpaisa", "airpay"],
     required: true,
   },
   amount: { type: Number, required: true },

@@ -58,8 +58,7 @@ async function getNextGateway() {
     counter = await GatewayCounter.create({ counter: 0 });
   }
 
-  // const gateway = counter.counter % 2 === 0 ? "cashfree" : "razorpay";
-  const gateway = counter.counter % 2 === 0 ? "sabpaisa" : "sabpaisa";
+  const gateway = counter.counter % 2 === 0 ? "sabpaisa" : "airpay";
 
   // Increment counter for next request
   counter.counter += 1;
@@ -144,6 +143,19 @@ const decryptSabPaisa = (encryptedData) => {
   decrypted += decipher.final("utf8");
 
   return decrypted;
+};
+
+const generateAirpayChecksum = (params) => {
+  // Airpay checksum format: username:password:merchantId:orderId:amount:currency
+  const checksumString = `${params.username}:${params.password}:${params.merchantId}:${params.orderId}:${params.amount}:${params.currency}`;
+
+  // Generate SHA256 hash
+  const checksum = crypto
+    .createHash("sha256")
+    .update(checksumString)
+    .digest("hex");
+
+  return checksum;
 };
 
 // Routes
@@ -352,6 +364,132 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
     }
   } catch (error) {
     console.error("Error processing SabPaisa callback:", error);
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
+  }
+});
+
+app.post("/api/airpay/create-payment", async (req, res) => {
+  try {
+    const { order_id, amount, name, phone, email } = req.body;
+
+    if (!amount || !name || !email || !phone) {
+      return res
+        .status(400)
+        .json({ error: "Amount, name, email, and phone are required" });
+    }
+
+    const merchantId = process.env.AIRPAY_MERCHANT_ID;
+    const username = process.env.AIRPAY_USERNAME;
+    const password = process.env.AIRPAY_PASSWORD;
+    const currency = "INR";
+
+    // Generate checksum
+    const checksum = generateAirpayChecksum({
+      username,
+      password,
+      merchantId,
+      orderId: order_id,
+      amount: Number.parseFloat(amount).toFixed(2),
+      currency,
+    });
+
+    // Store payment in database
+    await Payment.create({
+      orderId: order_id,
+      gateway: "airpay",
+      amount: amount,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
+      paymentSessionId: order_id,
+      status: "initiated",
+    });
+
+    // Return payment data for frontend to submit
+    res.json({
+      success: true,
+      paymentUrl: process.env.AIRPAY_BASE_URL,
+      paymentData: {
+        merchantId: merchantId,
+        orderId: order_id,
+        amount: Number.parseFloat(amount).toFixed(2),
+        currency: currency,
+        buyerEmail: email,
+        buyerPhone: phone,
+        buyerFirstName: name,
+        buyerLastName: "",
+        buyerAddress: "NA",
+        buyerCity: "NA",
+        buyerState: "NA",
+        buyerCountry: "India",
+        buyerPincode: "000000",
+        orderDescription: "Payment",
+        checksum: checksum,
+        privatekey: process.env.AIRPAY_API_KEY,
+        mer_dom: process.env.FRONTEND_URL || "http://localhost:5173",
+        responseUrl: `${
+          process.env.FRONTEND_URL || "http://localhost:5000"
+        }/api/airpay/callback`,
+      },
+    });
+  } catch (error) {
+    console.error("[v0] Error creating Airpay payment:", error);
+    res.status(500).json({
+      error: "Failed to create payment",
+      details: error.message,
+    });
+  }
+});
+
+app.post("/api/airpay/callback", async (req, res) => {
+  try {
+    const {
+      TRANSACTIONID,
+      APTRANSACTIONID,
+      AMOUNT,
+      TRANSACTIONSTATUS,
+      MESSAGE,
+    } = req.body;
+
+    console.log("[v0] Airpay callback received:", req.body);
+
+    if (!TRANSACTIONID) {
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
+    }
+
+    // Check if payment was successful (status code 200 means success in Airpay)
+    if (TRANSACTIONSTATUS === "200") {
+      await Payment.findOneAndUpdate(
+        { orderId: TRANSACTIONID },
+        {
+          status: "success",
+          updatedAt: Date.now(),
+          razorpayOrderId: APTRANSACTIONID, // Store Airpay transaction ID
+        }
+      );
+
+      // Redirect to success page
+      res.redirect(
+        `${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}`
+      );
+    } else {
+      // Update payment status to failed
+      await Payment.findOneAndUpdate(
+        { orderId: TRANSACTIONID },
+        { status: "failed", updatedAt: Date.now() }
+      );
+
+      // Redirect to failure page
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL
+        }/payment/failed?txnId=${TRANSACTIONID}&message=${
+          MESSAGE || "Payment failed"
+        }`
+      );
+    }
+  } catch (error) {
+    console.error("Error processing Airpay callback:", error);
     res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
   }
 });
