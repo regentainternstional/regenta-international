@@ -121,6 +121,8 @@ export default function Payment() {
 
     try {
       const orderId = "order_" + Date.now();
+      console.log("[v0] Starting payment process with order:", orderId);
+      console.log("[v0] API Base URL:", import.meta.env.VITE_API_BASE_URL);
       const gatewayRes = await fetch(
         `${import.meta.env.VITE_BACKEND_API}/get-gateway`,
         {
@@ -134,7 +136,7 @@ export default function Payment() {
       }
 
       const { gateway } = await gatewayRes.json();
-      console.log(`Using ${gateway} gateway`);
+      console.log(`[v0] Using ${gateway} gateway`);
 
       if (gateway === "sabpaisa") {
         // Create SabPaisa payment request
@@ -184,6 +186,7 @@ export default function Payment() {
           setLoading(false);
         }
       } else if (gateway === "airpay") {
+        console.log("[v0] Creating Airpay payment...");
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/api/airpay/create-payment`,
           {
@@ -195,6 +198,8 @@ export default function Payment() {
           }
         );
 
+        console.log("[v0] Airpay response:", response.data);
+
         if (response.data.success) {
           const form = document.createElement("form");
           form.method = "POST";
@@ -202,6 +207,13 @@ export default function Payment() {
 
           // Add Airpay fields: mercid, data (encrypted), privatekey, checksum
           const paymentData = response.data.paymentData;
+
+          console.log("[v0] Creating Airpay form with data:", {
+            mercid: paymentData.mercid,
+            dataLength: paymentData.data?.length,
+            privatekeyLength: paymentData.privatekey?.length,
+            checksumLength: paymentData.checksum?.length,
+          });
 
           // Add merchant ID
           const mercidInput = document.createElement("input");
@@ -232,11 +244,12 @@ export default function Payment() {
           form.appendChild(checksumInput);
 
           document.body.appendChild(form);
+          console.log("[v0] Submitting Airpay form to:", form.action);
           form.submit();
 
           if (autofillDataId) {
             await fetch(
-              `${import.meta.env.VITE_BACKEND_API}/mark-data-processed`,
+              `${import.meta.env.VITE_API_BASE_URL}/mark-data-processed`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -245,6 +258,7 @@ export default function Payment() {
             );
           }
         } else {
+          console.error("[v0] Airpay payment creation failed:", response.data);
           setGeneralError("Failed to initiate payment. Please try again.");
           setLoading(false);
         }

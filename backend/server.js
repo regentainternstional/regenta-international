@@ -320,11 +320,21 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
   }
 });
 
+app.options("*", cors());
+
 app.post("/api/airpay/create-payment", async (req, res) => {
   try {
+    console.log("[v0] Airpay payment request received:", {
+      order_id: req.body.order_id,
+      amount: req.body.amount,
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+    });
     const { order_id, amount, name, phone, email } = req.body;
 
     if (!amount || !name || !email || !phone) {
+      console.error("[v0] Missing required fields");
       return res
         .status(400)
         .json({ error: "Amount, name, email, and phone are required" });
@@ -332,33 +342,34 @@ app.post("/api/airpay/create-payment", async (req, res) => {
 
     const orderid = order_id || `ORD${Date.now()}`;
     const amountFormatted = Number.parseFloat(amount).toFixed(2);
+    console.log("[v0] Generated order ID:", orderid);
 
     // Prepare payment data
     const paymentData = {
-      buyerEmail: email,
-      buyerPhone: phone,
-      buyerFirstName: name,
-      buyerLastName: "",
-      buyerAddress: "NA",
-      buyerCity: "NA",
-      buyerState: "NA",
-      buyerCountry: "India",
-      buyerPinCode: "000000",
+      buyer_email: email,
+      buyer_firstname: name,
+      buyer_lastname: "",
+      buyer_address: "NA",
+      buyer_city: "NA",
+      buyer_state: "NA",
+      buyer_country: "India",
+      buyer_phone: phone,
+      buyer_pincode: "000000",
       amount: amountFormatted,
       orderid: orderid,
-      currency: "356",
-      isocurrency: "INR",
-      chmod: "",
-      customvar: "airpayPayment",
-      txnsubtype: "1",
-      mercid: airpayMerchantId,
-      arpyVer: "3",
-    }
+      iso_currency: "INR",
+      currency_code: "356",
+      merchant_id: airpayMerchantId,
+    };
+
+    console.log("[v0] Payment data prepared:", paymentData);
 
     const privatekey = crypto
       .createHash("sha256")
       .update(airpaySecret + "@" + airpayUsername + ":|:" + airpayPassword)
       .digest("hex");
+
+    console.log("[v0] Private key generated, length:", privatekey.length);
 
     const sortedData = {};
     Object.keys(paymentData)
@@ -378,8 +389,10 @@ app.post("/api/airpay/create-payment", async (req, res) => {
       .update(checksumString + currentDate)
       .digest("hex");
 
-    const encryptedData = airpayEncrypt(JSON.stringify(paymentData));
+    console.log("[v0] Checksum generated:", checksum);
 
+    const encryptedData = airpayEncrypt(JSON.stringify(paymentData));
+    console.log("[v0] Data encrypted, length:", encryptedData.length);
     // Store payment in database
     await Payment.create({
       orderId: orderid,
@@ -392,8 +405,8 @@ app.post("/api/airpay/create-payment", async (req, res) => {
       status: "initiated",
     });
 
-    // Return payment data for form submission
-    res.json({
+    console.log("[v0] Payment record created in database");
+    const responseData = {
       success: true,
       paymentUrl:
         process.env.AIRPAY_PAYMENT_URL ||
@@ -404,9 +417,16 @@ app.post("/api/airpay/create-payment", async (req, res) => {
         privatekey: privatekey,
         checksum: checksum,
       },
-    });
+    };
+
+    console.log(
+      "[v0] Sending response with payment URL:",
+      responseData.paymentUrl
+    );
+    res.json(responseData);
   } catch (error) {
     console.error("[v0] Error creating Airpay payment:", error);
+    console.error("[v0] Error stack:", error.stack);
     res.status(500).json({
       error: "Failed to create payment",
       details: error.message,
