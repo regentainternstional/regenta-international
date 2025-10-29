@@ -421,7 +421,6 @@
 //   );
 // }
 
-
 "use client"
 
 import { useState } from "react"
@@ -621,7 +620,6 @@ export default function Payment() {
           form.method = "POST"
           form.action = response.data.paymentUrl
 
-          // Add Airpay fields: mercid, data (encrypted), privatekey, checksum
           const paymentData = response.data.paymentData
 
           console.log("[v0] Creating Airpay form with data:", {
@@ -632,7 +630,6 @@ export default function Payment() {
             formAction: form.action,
           })
 
-          // Add merchant ID
           const mercidInput = document.createElement("input")
           mercidInput.type = "hidden"
           mercidInput.name = "mercid"
