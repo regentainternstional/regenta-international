@@ -420,7 +420,6 @@
 //     </div>
 //   );
 // }
-
 "use client"
 
 import { useState } from "react"
@@ -603,9 +602,9 @@ export default function Payment() {
           setGeneralError("Failed to initiate payment. Please try again.")
           setLoading(false)
         }
-      } else if (gateway === "airpay") {
-        console.log("[v0] Creating Airpay payment...")
-        const response = await axios.post(`${apiUrl}/api/airpay/create-payment`, {
+      } else if (gateway === "phonepe") {
+        console.log("[v0] Creating PhonePe payment...")
+        const response = await axios.post(`${apiUrl}/api/phonepe/create-payment`, {
           amount: Number.parseFloat(formData.amount),
           name: formData.name,
           email: formData.email,
@@ -613,54 +612,12 @@ export default function Payment() {
           order_id: orderId,
         })
 
-        console.log("[v0] Airpay response:", response.data)
+        console.log("[v0] PhonePe response:", response.data)
 
-        if (response.data.success) {
-          const form = document.createElement("form")
-          form.method = "POST"
-          form.action = response.data.paymentUrl
+        if (response.data.success && response.data.paymentUrl) {
+          console.log("[v0] Redirecting to PhonePe payment page:", response.data.paymentUrl)
 
-          const paymentData = response.data.paymentData
-
-          console.log("[v0] Creating Airpay form with data:", {
-            mercid: paymentData.mercid,
-            dataLength: paymentData.data?.length,
-            privatekeyLength: paymentData.privatekey?.length,
-            checksumLength: paymentData.checksum?.length,
-            formAction: form.action,
-          })
-
-          const mercidInput = document.createElement("input")
-          mercidInput.type = "hidden"
-          mercidInput.name = "mercid"
-          mercidInput.value = paymentData.mercid
-          form.appendChild(mercidInput)
-
-          // Add encrypted data
-          const dataInput = document.createElement("input")
-          dataInput.type = "hidden"
-          dataInput.name = "data"
-          dataInput.value = paymentData.data
-          form.appendChild(dataInput)
-
-          // Add private key
-          const privatekeyInput = document.createElement("input")
-          privatekeyInput.type = "hidden"
-          privatekeyInput.name = "privatekey"
-          privatekeyInput.value = paymentData.privatekey
-          form.appendChild(privatekeyInput)
-
-          // Add checksum
-          const checksumInput = document.createElement("input")
-          checksumInput.type = "hidden"
-          checksumInput.name = "checksum"
-          checksumInput.value = paymentData.checksum
-          form.appendChild(checksumInput)
-
-          document.body.appendChild(form)
-          console.log("[v0] Submitting Airpay form to:", form.action)
-          form.submit()
-
+          // Mark data as processed before redirect
           if (autofillDataId) {
             await fetch(`${apiUrl}/mark-data-processed`, {
               method: "POST",
@@ -668,8 +625,11 @@ export default function Payment() {
               body: JSON.stringify({ dataId: autofillDataId }),
             })
           }
+
+          // Redirect to PhonePe payment page
+          window.location.href = response.data.paymentUrl
         } else {
-          console.error("[v0] Airpay payment creation failed:", response.data)
+          console.error("[v0] PhonePe payment creation failed:", response.data)
           setGeneralError("Failed to initiate payment. Please try again.")
           setLoading(false)
         }
