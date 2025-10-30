@@ -786,6 +786,29 @@ console.log("[v0] PhonePe configuration loaded:")
 console.log("[v0] - Client ID:", process.env.PHONEPE_CLIENT_ID)
 console.log("[v0] - Environment:", process.env.PHONEPE_ENV)
 
+// Airpay configuration logging
+console.log("[v0] Airpay configuration loaded:")
+console.log("[v0] - Merchant ID:", process.env.AIRPAY_MERCHANT_ID)
+console.log("[v0] - Username:", process.env.AIRPAY_USERNAME)
+console.log("[v0] - Client ID:", process.env.AIRPAY_CLIENT_ID)
+
+const airpayEncrypt = (data, key) => {
+  const iv = crypto.randomBytes(8)
+  const ivHex = iv.toString("hex")
+  const cipher = crypto.createCipheriv("aes-256-cbc", Buffer.from(key, "utf-8"), Buffer.from(ivHex))
+  const raw = Buffer.concat([cipher.update(data, "utf-8"), cipher.final()])
+  return ivHex + raw.toString("base64")
+}
+
+const airpayDecrypt = (encryptedData, key) => {
+  const ivHex = encryptedData.substring(0, 16)
+  const encryptedText = encryptedData.substring(16)
+  const decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(key, "utf-8"), Buffer.from(ivHex))
+  let decrypted = decipher.update(encryptedText, "base64", "utf8")
+  decrypted += decipher.final("utf8")
+  return decrypted
+}
+
 const encryptSabPaisa = (data) => {
   // Decode base64 keys
   const aesKey = Buffer.from(process.env.SABPAISA_AUTH_KEY, "base64")
@@ -858,9 +881,10 @@ async function getNextGateway() {
     counter = await GatewayCounter.create({ counter: 0 })
   }
 
-  const gateway = counter.counter % 2 === 0 ? "sabpaisa" : "phonepe"
+  // Rotate through 3 gateways: sabpaisa (0), phonepe (1), airpay (2)
+  const gateways = ["sabpaisa", "phonepe", "airpay"]
+  const gateway = gateways[counter.counter % 3]
 
-  // Increment counter for next request
   counter.counter += 1
   await counter.save()
 
@@ -1004,7 +1028,6 @@ app.post("/api/phonepe/create-payment", async (req, res) => {
       throw new Error("Failed to get payment URL from PhonePe")
     }
 
-    // Store payment in database
     await Payment.create({
       orderId: merchantOrderId,
       gateway: "phonepe",
@@ -1250,6 +1273,142 @@ app.delete("/uploaded-data/:id", async (req, res) => {
   } catch (err) {
     console.error("Error deleting data:", err)
     res.status(500).json({ error: "Failed to delete data" })
+  }
+})
+
+app.post("/api/airpay/create-payment", async (req, res) => {
+  try {
+    console.log("[v0] ========== AIRPAY PAYMENT REQUEST ==========")
+    console.log("[v0] Request body:", JSON.stringify(req.body, null, 2))
+
+    const { order_id, amount, name, phone, email } = req.body
+
+    if (!amount || !name || !email || !phone) {
+      console.error("[v0] Missing required fields")
+      return res.status(400).json({ error: "Amount, name, email, and phone are required" })
+    }
+
+    const airpayMerchantId = process.env.AIRPAY_MERCHANT_ID
+    const airpayUsername = process.env.AIRPAY_USERNAME
+    const airpayPassword = process.env.AIRPAY_PASSWORD
+    const airpaySecret = process.env.AIRPAY_SECRET
+
+    const airpayKey = crypto
+      .createHash("md5")
+      .update(airpayUsername + "~:~" + airpayPassword)
+      .digest("hex")
+
+    const orderId = order_id || `ORDER_${Date.now()}`
+    const amountFormatted = Number.parseFloat(amount).toFixed(2)
+
+    const dataObject = {
+      buyer_email: email,
+      buyer_firstname: name,
+      buyer_lastname: "",
+      buyer_address: "NA",
+      buyer_city: "NA",
+      buyer_state: "NA",
+      buyer_country: "India",
+      amount: amountFormatted,
+      orderid: orderId,
+      buyer_phone: phone,
+      buyer_pincode: "000000",
+      iso_currency: "INR",
+      currency_code: "356",
+      merchant_id: airpayMerchantId,
+    }
+
+    const dataString = JSON.stringify(dataObject)
+    const encryptedData = airpayEncrypt(dataString, airpayKey)
+
+    const udata = airpayUsername + ":|:" + airpayPassword
+    const privatekey = crypto
+      .createHash("sha256")
+      .update(airpaySecret + "@" + udata)
+      .digest("hex")
+
+    const currentDate = new Date().toISOString().split("T")[0]
+    const checksumData = Object.values(dataObject).sort().join("") + currentDate
+    const checksum = crypto
+      .createHash("sha256")
+      .update(airpaySecret + "@" + checksumData)
+      .digest("hex")
+
+    const paymentUrl = process.env.AIRPAY_PAYMENT_URL || "https://payments.airpay.co.in/pay/index.php"
+
+    await Payment.create({
+      orderId: orderId,
+      gateway: "airpay",
+      amount: amount,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
+      paymentSessionId: orderId,
+      status: "initiated",
+    })
+
+    console.log("[v0] Payment record created in database")
+    console.log("[v0] Payment URL:", paymentUrl)
+    console.log("[v0] Encrypted data length:", encryptedData.length)
+    console.log("[v0] ========== END AIRPAY REQUEST ==========")
+
+    res.json({
+      success: true,
+      paymentUrl: paymentUrl,
+      paymentData: {
+        mercid: airpayMerchantId,
+        data: encryptedData,
+        privatekey: privatekey,
+        checksum: checksum,
+      },
+    })
+  } catch (error) {
+    console.error("[v0] Error creating Airpay payment:", error)
+    console.error("[v0] Error stack:", error.stack)
+    res.status(500).json({
+      error: "Failed to create payment",
+      details: error.message,
+    })
+  }
+})
+
+app.post("/api/airpay/callback", async (req, res) => {
+  try {
+    console.log("[v0] Airpay callback received:", req.body)
+
+    const { TRANSACTIONID, APTRANSACTIONID, AMOUNT, TRANSACTIONSTATUS } = req.body
+
+    if (!TRANSACTIONID) {
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+    }
+
+    if (TRANSACTIONSTATUS === "200") {
+      await Payment.findOneAndUpdate(
+        { orderId: TRANSACTIONID },
+        {
+          status: "success",
+          updatedAt: Date.now(),
+          razorpayOrderId: APTRANSACTIONID,
+        },
+      )
+
+      const payment = await Payment.findOne({ orderId: TRANSACTIONID })
+      if (payment && payment.customerEmail) {
+        await UploadedData.findOneAndUpdate(
+          { email: payment.customerEmail, processed: false },
+          { processed: true, processedAt: Date.now() },
+        )
+      }
+
+      res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}`)
+    } else {
+      await Payment.findOneAndUpdate({ orderId: TRANSACTIONID }, { status: "failed", updatedAt: Date.now() })
+
+      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${TRANSACTIONID}`)
+    }
+  } catch (error) {
+    console.error("[v0] Error processing Airpay callback:", error)
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
   }
 })
 
