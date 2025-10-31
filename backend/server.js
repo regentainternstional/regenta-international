@@ -967,14 +967,23 @@ app.post("/api/sabpaisa/create-payment", async (req, res) => {
 app.post("/api/sabpaisa/callback", async (req, res) => {
   try {
     console.log("[v0] ========== SABPAISA CALLBACK (POST) ==========")
+    console.log("[v0] Request headers:", req.headers)
     console.log("[v0] Request body:", req.body)
     console.log("[v0] Request query:", req.query)
 
     const { encData } = req.body
 
     if (!encData) {
-      console.error("[v0] No encData in POST request")
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+      console.error("[v0] ❌ CRITICAL ERROR: No encData in POST request")
+      console.error("[v0] This usually means:")
+      console.error("[v0] 1. SabPaisa sent POST to HTTP URL (not HTTPS)")
+      console.error("[v0] 2. Server redirected HTTP→HTTPS (301)")
+      console.error("[v0] 3. Browser converted POST to GET, losing POST body data")
+      console.error("[v0] ")
+      console.error("[v0] SOLUTION: Update SabPaisa merchant dashboard callback URL to:")
+      console.error("[v0] https://api.regentainternational.in/api/sabpaisa/callback")
+      console.error("[v0] (Make sure it's HTTPS, not HTTP)")
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=missing_data`)
     }
 
     let decryptedData
@@ -1027,13 +1036,21 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
 app.get("/api/sabpaisa/callback", async (req, res) => {
   try {
     console.log("[v0] ========== SABPAISA CALLBACK (GET) ==========")
+    console.log("[v0] ⚠️  WARNING: Received GET request instead of POST")
+    console.log("[v0] This usually means POST data was lost due to HTTP→HTTPS redirect")
+    console.log("[v0] Request headers:", req.headers)
     console.log("[v0] Request query:", req.query)
 
     const { encData } = req.query
 
     if (!encData) {
-      console.error("[v0] No encData in GET request")
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+      console.error("[v0] ❌ CRITICAL ERROR: No encData in GET request")
+      console.error("[v0] This confirms the HTTP→HTTPS redirect issue")
+      console.error("[v0] ")
+      console.error("[v0] SOLUTION: Contact SabPaisa support and ask them to update")
+      console.error("[v0] your merchant callback URL to HTTPS:")
+      console.error("[v0] https://api.regentainternational.in/api/sabpaisa/callback")
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=missing_data`)
     }
 
     let decryptedData
