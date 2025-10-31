@@ -1285,16 +1285,16 @@ const airpayChecksumCal = (alldata, username, password) => {
     .createHash("sha256")
     .update(username + "~:~" + password)
     .digest("hex")
-  const currentDate = new Date().toISOString().split("T")[0]
-  const checksumString = keySha256 + "@" + alldata + currentDate
 
   console.log("[v0] Checksum calculation:")
   console.log("[v0] - Key SHA256:", keySha256)
   console.log("[v0] - All data:", alldata)
-  console.log("[v0] - Current date:", currentDate)
-  console.log("[v0] - Checksum string:", checksumString)
+  console.log("[v0] - Checksum string:", keySha256 + "@" + alldata)
 
-  return crypto.createHash("sha256").update(checksumString).digest("hex")
+  return crypto
+    .createHash("sha256")
+    .update(keySha256 + "@" + alldata)
+    .digest("hex")
 }
 
 app.post("/api/airpay/create-payment", async (req, res) => {
@@ -1322,27 +1322,43 @@ app.post("/api/airpay/create-payment", async (req, res) => {
     const firstName = nameParts[0] || name
     const lastName = nameParts.slice(1).join(" ") || "NA"
 
-    // Generate private key - matching official v3 SDK
     const udata = airpayUsername + ":|:" + airpayPassword
     const privatekey = crypto
       .createHash("sha256")
       .update(airpaySecret + "@" + udata)
       .digest("hex")
 
-    // Prepare data for checksum - matching official v3 SDK order
     const alldata =
       email +
       firstName +
       lastName +
-      "NA" + // address
-      "NA" + // city
-      "NA" + // state
-      "India" + // country
+      "NA" + // buyerAddress
+      "NA" + // buyerCity
+      "NA" + // buyerState
+      "India" + // buyerCountry
       amountFormatted +
       orderId
 
-    // Calculate checksum - matching official v3 SDK
-    const checksum = airpayChecksumCal(alldata, airpayUsername, airpayPassword)
+    const currentDate = new Date().toISOString().split("T")[0] // YYYY-MM-DD format
+    const aldata = alldata + currentDate
+
+    console.log("[v0] All data string (without date):", alldata)
+    console.log("[v0] Current date:", currentDate)
+    console.log("[v0] All data with date:", aldata)
+
+    const keySha256 = crypto
+      .createHash("sha256")
+      .update(airpayUsername + "~:~" + airpayPassword)
+      .digest("hex")
+
+    const checksum = crypto
+      .createHash("sha256")
+      .update(keySha256 + "@" + aldata)
+      .digest("hex")
+
+    console.log("[v0] Key SHA256:", keySha256)
+    console.log("[v0] Checksum string:", keySha256 + "@" + aldata)
+    console.log("[v0] Checksum:", checksum)
 
     // v3 API URL (no token required)
     const paymentUrl = "https://payments.airpay.co.in/pay/index.php"
@@ -1362,7 +1378,6 @@ app.post("/api/airpay/create-payment", async (req, res) => {
     console.log("[v0] Payment record created in database")
     console.log("[v0] Payment URL:", paymentUrl)
     console.log("[v0] Private key:", privatekey)
-    console.log("[v0] Checksum:", checksum)
     console.log("[v0] ========== END AIRPAY V3 REQUEST ==========")
 
     // Return raw form data (no encryption in v3)
