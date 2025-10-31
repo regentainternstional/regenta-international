@@ -627,7 +627,7 @@ export default function Payment() {
           setLoading(false)
         }
       } else if (gateway === "airpay") {
-        console.log("[v0] Creating Airpay payment...")
+        console.log("[v0] Creating Airpay v3 payment...")
         const response = await axios.post(`${apiUrl}/api/airpay/create-payment`, {
           amount: Number.parseFloat(formData.amount),
           name: formData.name,
@@ -636,43 +636,24 @@ export default function Payment() {
           order_id: orderId,
         })
 
-        console.log("[v0] Airpay response:", response.data)
+        console.log("[v0] Airpay v3 response:", response.data)
 
         if (response.data.success && response.data.paymentUrl) {
-          console.log("[v0] Redirecting to Airpay payment page:", response.data.paymentUrl)
+          console.log("[v0] Redirecting to Airpay v3 payment page:", response.data.paymentUrl)
 
-          // Create form and submit to Airpay
           const form = document.createElement("form")
           form.method = "POST"
           form.action = response.data.paymentUrl
 
-          // Add merchant ID
-          const mercidInput = document.createElement("input")
-          mercidInput.type = "hidden"
-          mercidInput.name = "mercid"
-          mercidInput.value = response.data.paymentData.mercid
-          form.appendChild(mercidInput)
-
-          // Add encrypted data
-          const dataInput = document.createElement("input")
-          dataInput.type = "hidden"
-          dataInput.name = "data"
-          dataInput.value = response.data.paymentData.data
-          form.appendChild(dataInput)
-
-          // Add private key
-          const privatekeyInput = document.createElement("input")
-          privatekeyInput.type = "hidden"
-          privatekeyInput.name = "privatekey"
-          privatekeyInput.value = response.data.paymentData.privatekey
-          form.appendChild(privatekeyInput)
-
-          // Add checksum
-          const checksumInput = document.createElement("input")
-          checksumInput.type = "hidden"
-          checksumInput.name = "checksum"
-          checksumInput.value = response.data.paymentData.checksum
-          form.appendChild(checksumInput)
+          // Add all payment data fields as individual form inputs
+          const paymentData = response.data.paymentData
+          for (const [key, value] of Object.entries(paymentData)) {
+            const input = document.createElement("input")
+            input.type = "hidden"
+            input.name = key
+            input.value = value
+            form.appendChild(input)
+          }
 
           document.body.appendChild(form)
 
