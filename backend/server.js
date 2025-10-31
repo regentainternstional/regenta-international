@@ -756,7 +756,7 @@ const PORT = process.env.PORT || 5000
 app.use(cors())
 app.use(
   cors({
-    origin: ["https://regentainternational.in", "https://api.regentainternational.in", process.env.FRONTEND_URL, "http://localhost:3000"],
+    origin: ["https://regentainternational.in", "https://api.regentainternational.in", process.env.FRONTEND_URL],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -965,10 +965,11 @@ app.post("/api/sabpaisa/create-payment", async (req, res) => {
 })
 
 app.post("/api/sabpaisa/callback", async (req, res) => {
+  try {
     console.log("[v0] ========== SABPAISA CALLBACK (POST) ==========")
     console.log("[v0] Request body:", req.body)
     console.log("[v0] Request query:", req.query)
-  try {
+
     const { encData } = req.body
 
     if (!encData) {
@@ -976,9 +977,14 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
     }
 
-    // Decrypt the response
-    const decryptedData = decryptSabPaisa(encData)
-    console.log("[v0] Decrypted data:", decryptedData)
+    let decryptedData
+    try {
+      decryptedData = decryptSabPaisa(encData)
+      console.log("[v0] Decrypted data:", decryptedData)
+    } catch (decryptError) {
+      console.error("[v0] Decryption failed:", decryptError)
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=decryption_failed`)
+    }
 
     // Parse query string format response
     const params = new URLSearchParams(decryptedData)
@@ -987,9 +993,9 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
 
     console.log("[v0] Status:", status)
     console.log("[v0] Transaction ID:", transactionId)
+    console.log("[v0] All params:", Array.from(params.entries()))
 
-    // Check if payment was successful
-    if (status === "SUCCESS") {
+    if (status && status.toUpperCase() === "SUCCESS") {
       await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "success", updatedAt: Date.now() })
 
       const payment = await Payment.findOne({ paymentSessionId: transactionId })
@@ -1002,18 +1008,19 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
 
       console.log("[v0] Payment successful, redirecting to success page")
       console.log("[v0] ========== END SABPAISA CALLBACK ==========")
-
       // Redirect to success page
       res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${transactionId}`)
     } else {
       console.log("[v0] Payment failed, redirecting to failed page")
       console.log("[v0] ========== END SABPAISA CALLBACK ==========")
+      await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "failed", updatedAt: Date.now() })
       // Redirect to failure page
-      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}`)
+      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}&status=${status}`)
     }
   } catch (error) {
-    console.error("Error processing SabPaisa post callback:", error)
-    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+    console.error("[v0] Error processing SabPaisa POST callback:", error)
+    console.error("[v0] Error stack:", error.stack)
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=processing_error`)
   }
 })
 
@@ -1029,9 +1036,14 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
     }
 
-    // Decrypt the response
-    const decryptedData = decryptSabPaisa(encData)
-    console.log("[v0] Decrypted data:", decryptedData)
+    let decryptedData
+    try {
+      decryptedData = decryptSabPaisa(encData)
+      console.log("[v0] Decrypted data:", decryptedData)
+    } catch (decryptError) {
+      console.error("[v0] Decryption failed:", decryptError)
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=decryption_failed`)
+    }
 
     // Parse query string format response
     const params = new URLSearchParams(decryptedData)
@@ -1040,9 +1052,9 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
 
     console.log("[v0] Status:", status)
     console.log("[v0] Transaction ID:", transactionId)
+    console.log("[v0] All params:", Array.from(params.entries()))
 
-    // Check if payment was successful
-    if (status === "SUCCESS") {
+    if (status && status.toUpperCase() === "SUCCESS") {
       await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "success", updatedAt: Date.now() })
 
       const payment = await Payment.findOne({ paymentSessionId: transactionId })
@@ -1060,17 +1072,16 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
     } else {
       console.log("[v0] Payment failed, redirecting to failed page")
       console.log("[v0] ========== END SABPAISA CALLBACK ==========")
+      await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "failed", updatedAt: Date.now() })
       // Redirect to failure page
-      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}`)
+      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}&status=${status}`)
     }
   } catch (error) {
     console.error("[v0] Error processing SabPaisa GET callback:", error)
-    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+    console.error("[v0] Error stack:", error.stack)
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=processing_error`)
   }
 })
-
-
-app.options("*", cors())
 
 app.post("/api/phonepe/create-payment", async (req, res) => {
   try {
