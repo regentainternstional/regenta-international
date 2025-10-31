@@ -10,6 +10,7 @@ import AdminDashboard from "./Components/AdminDashboard";
 import AdminPayments from "./Components/AdminPayments";
 import AdminUploads from "./Components/AdminUploads";
 import AdminLogin from "./Components/AdminLogin";
+import PaymentStatus from "./Components/PaymentStatus/PaymentStatus";
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
         <Route path="/return" element={<Return />} />
         <Route path="/payment/:id" element={<Payment />} />
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/payment/status" element={<PaymentStatus />} />
         <Route
           path="/admin/dashboard"
           element={
