@@ -965,36 +965,110 @@ app.post("/api/sabpaisa/create-payment", async (req, res) => {
 })
 
 app.post("/api/sabpaisa/callback", async (req, res) => {
+    console.log("[v0] ========== SABPAISA CALLBACK (POST) ==========")
+    console.log("[v0] Request body:", req.body)
+    console.log("[v0] Request query:", req.query)
   try {
     const { encData } = req.body
 
     if (!encData) {
+      console.error("[v0] No encData in POST request")
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
     }
 
     // Decrypt the response
     const decryptedData = decryptSabPaisa(encData)
+    console.log("[v0] Decrypted data:", decryptedData)
 
     // Parse query string format response
     const params = new URLSearchParams(decryptedData)
     const status = params.get("status")
     const transactionId = params.get("clientTxnId")
 
+    console.log("[v0] Status:", status)
+    console.log("[v0] Transaction ID:", transactionId)
+
     // Check if payment was successful
     if (status === "SUCCESS") {
       await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "success", updatedAt: Date.now() })
 
+      const payment = await Payment.findOne({ paymentSessionId: transactionId })
+      if (payment && payment.customerEmail) {
+        await UploadedData.findOneAndUpdate(
+          { email: payment.customerEmail, processed: false },
+          { processed: true, processedAt: Date.now() },
+        )
+      }
+
+      console.log("[v0] Payment successful, redirecting to success page")
+      console.log("[v0] ========== END SABPAISA CALLBACK ==========")
+
       // Redirect to success page
       res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${transactionId}`)
     } else {
+      console.log("[v0] Payment failed, redirecting to failed page")
+      console.log("[v0] ========== END SABPAISA CALLBACK ==========")
       // Redirect to failure page
       res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}`)
     }
   } catch (error) {
-    console.error("Error processing SabPaisa callback:", error)
+    console.error("Error processing SabPaisa post callback:", error)
     res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
   }
 })
+
+app.get("/api/sabpaisa/callback", async (req, res) => {
+  try {
+    console.log("[v0] ========== SABPAISA CALLBACK (GET) ==========")
+    console.log("[v0] Request query:", req.query)
+
+    const { encData } = req.query
+
+    if (!encData) {
+      console.error("[v0] No encData in GET request")
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+    }
+
+    // Decrypt the response
+    const decryptedData = decryptSabPaisa(encData)
+    console.log("[v0] Decrypted data:", decryptedData)
+
+    // Parse query string format response
+    const params = new URLSearchParams(decryptedData)
+    const status = params.get("status")
+    const transactionId = params.get("clientTxnId")
+
+    console.log("[v0] Status:", status)
+    console.log("[v0] Transaction ID:", transactionId)
+
+    // Check if payment was successful
+    if (status === "SUCCESS") {
+      await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "success", updatedAt: Date.now() })
+
+      const payment = await Payment.findOne({ paymentSessionId: transactionId })
+      if (payment && payment.customerEmail) {
+        await UploadedData.findOneAndUpdate(
+          { email: payment.customerEmail, processed: false },
+          { processed: true, processedAt: Date.now() },
+        )
+      }
+
+      console.log("[v0] Payment successful, redirecting to success page")
+      console.log("[v0] ========== END SABPAISA CALLBACK ==========")
+      // Redirect to success page
+      res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${transactionId}`)
+    } else {
+      console.log("[v0] Payment failed, redirecting to failed page")
+      console.log("[v0] ========== END SABPAISA CALLBACK ==========")
+      // Redirect to failure page
+      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${transactionId}`)
+    }
+  } catch (error) {
+    console.error("[v0] Error processing SabPaisa GET callback:", error)
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+  }
+})
+
 
 app.options("*", cors())
 

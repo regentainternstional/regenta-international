@@ -10,7 +10,9 @@ import AdminDashboard from "./Components/AdminDashboard";
 import AdminPayments from "./Components/AdminPayments";
 import AdminUploads from "./Components/AdminUploads";
 import AdminLogin from "./Components/AdminLogin";
-import PaymentStatus from "./Components/PaymentStatus/PaymentStatus";
+import PaymentStatus from "./Components/PaymentStatus/PaymentSuccess";
+import PaymentSuccess from "./Components/PaymentStatus/PaymentSuccess";
+import PaymentFailed from "./Components/PaymentStatus/PaymentFailed";
 
 const App = () => {
   return (
@@ -23,6 +25,8 @@ const App = () => {
         <Route path="/payment/:id" element={<Payment />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/payment/status" element={<PaymentStatus />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
         <Route
           path="/admin/dashboard"
           element={
