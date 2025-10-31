@@ -732,6 +732,7 @@
 // dbConnect().then(() => {
 //   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 // });
+
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
@@ -744,6 +745,7 @@ import multer from "multer"
 import { parse } from "csv-parse/sync"
 import { StandardCheckoutClient, Env, StandardCheckoutPayRequest } from "pg-sdk-node"
 import CRC32 from "crc-32"
+import dateformat from "dateformat"
 
 dotenv.config()
 
@@ -754,7 +756,7 @@ const PORT = process.env.PORT || 5000
 app.use(cors())
 app.use(
   cors({
-    origin: ["https://regentainternational.in", "https://api.regentainternational.in", process.env.FRONTEND_URL],
+    origin: ["https://regentainternational.in", "https://api.regentainternational.in", process.env.FRONTEND_URL, "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -1280,23 +1282,6 @@ app.delete("/uploaded-data/:id", async (req, res) => {
   }
 })
 
-const airpayChecksumCal = (alldata, username, password) => {
-  const keySha256 = crypto
-    .createHash("sha256")
-    .update(username + "~:~" + password)
-    .digest("hex")
-
-  console.log("[v0] Checksum calculation:")
-  console.log("[v0] - Key SHA256:", keySha256)
-  console.log("[v0] - All data:", alldata)
-  console.log("[v0] - Checksum string:", keySha256 + "@" + alldata)
-
-  return crypto
-    .createHash("sha256")
-    .update(keySha256 + "@" + alldata)
-    .digest("hex")
-}
-
 app.post("/api/airpay/create-payment", async (req, res) => {
   try {
     console.log("[v0] ========== AIRPAY V3 PAYMENT REQUEST ==========")
@@ -1309,94 +1294,108 @@ app.post("/api/airpay/create-payment", async (req, res) => {
       return res.status(400).json({ error: "Amount, name, email, and phone are required" })
     }
 
-    const airpayMerchantId = process.env.AIRPAY_MERCHANT_ID
-    const airpayUsername = process.env.AIRPAY_USERNAME
-    const airpayPassword = process.env.AIRPAY_PASSWORD
-    const airpaySecret = process.env.AIRPAY_SECRET
+    const mid = process.env.AIRPAY_MERCHANT_ID
+    const username = process.env.AIRPAY_USERNAME
+    const password = process.env.AIRPAY_PASSWORD
+    const secret = process.env.AIRPAY_SECRET
 
-    const orderId = order_id || `ORDER_${Date.now()}`
-    const amountFormatted = Number.parseFloat(amount).toFixed(2)
+    const orderid = order_id || `ORDER_${Date.now()}`
+    const amountValue = Number.parseFloat(amount).toFixed(2)
 
-    // Split name into first and last name
     const nameParts = name.trim().split(" ")
-    const firstName = nameParts[0] || name
-    const lastName = nameParts.slice(1).join(" ") || "NA"
+    const buyerFirstName = nameParts[0] || name
+    const buyerLastName = nameParts.slice(1).join(" ") || ""
 
-    const udata = airpayUsername + ":|:" + airpayPassword
-    const privatekey = crypto
-      .createHash("sha256")
-      .update(airpaySecret + "@" + udata)
-      .digest("hex")
+    const buyerEmail = email
+    const buyerPhone = phone
+    const buyerAddress = "NA"
+    const buyerCity = "NA"
+    const buyerState = "NA"
+    const buyerCountry = "India"
+    const buyerPinCode = "000000"
 
     const alldata =
-      email +
-      firstName +
-      lastName +
-      "NA" + // buyerAddress
-      "NA" + // buyerCity
-      "NA" + // buyerState
-      "India" + // buyerCountry
-      amountFormatted +
-      orderId
+      buyerEmail +
+      buyerFirstName +
+      buyerLastName +
+      buyerAddress +
+      buyerCity +
+      buyerState +
+      buyerCountry +
+      amountValue +
+      orderid
 
-    const currentDate = new Date().toISOString().split("T")[0] // YYYY-MM-DD format
-    const aldata = alldata + currentDate
+    console.log("[v0] All data (without date):", alldata)
 
-    console.log("[v0] All data string (without date):", alldata)
-    console.log("[v0] Current date:", currentDate)
-    console.log("[v0] All data with date:", aldata)
+    const udata = username + ":|:" + password
+    const privatekey = crypto
+      .createHash("sha256")
+      .update(secret + "@" + udata)
+      .digest("hex")
+
+    console.log("[v0] Private key calculation:")
+    console.log("[v0] - udata:", udata)
+    console.log("[v0] - privatekey string:", secret + "@" + udata)
+    console.log("[v0] - privatekey:", privatekey)
 
     const keySha256 = crypto
       .createHash("sha256")
-      .update(airpayUsername + "~:~" + airpayPassword)
+      .update(username + "~:~" + password)
       .digest("hex")
+
+    // Note: Official sample has 'var now = new Date()' at module level (bug),
+    // but we create it per request for correctness
+    const now = new Date()
+    const currentDate = dateformat(now, "yyyy-mm-dd")
+    const aldata = alldata + currentDate
+
+    console.log("[v0] Checksum calculation:")
+    console.log("[v0] - keySha256 string:", username + "~:~" + password)
+    console.log("[v0] - keySha256:", keySha256)
+    console.log("[v0] - Current date:", currentDate)
+    console.log("[v0] - aldata (with date):", aldata)
+    console.log("[v0] - Checksum string:", keySha256 + "@" + aldata)
 
     const checksum = crypto
       .createHash("sha256")
       .update(keySha256 + "@" + aldata)
       .digest("hex")
 
-    console.log("[v0] Key SHA256:", keySha256)
-    console.log("[v0] Checksum string:", keySha256 + "@" + aldata)
-    console.log("[v0] Checksum:", checksum)
+    console.log("[v0] - Final checksum:", checksum)
 
-    // v3 API URL (no token required)
     const paymentUrl = "https://payments.airpay.co.in/pay/index.php"
 
-    // Create payment record
     await Payment.create({
-      orderId: orderId,
+      orderId: orderid,
       gateway: "airpay",
       amount: amount,
       customerName: name,
       customerEmail: email,
       customerPhone: phone,
-      paymentSessionId: orderId,
+      paymentSessionId: orderid,
       status: "initiated",
     })
 
     console.log("[v0] Payment record created in database")
     console.log("[v0] Payment URL:", paymentUrl)
-    console.log("[v0] Private key:", privatekey)
     console.log("[v0] ========== END AIRPAY V3 REQUEST ==========")
 
-    // Return raw form data (no encryption in v3)
     res.json({
       success: true,
       paymentUrl: paymentUrl,
       paymentData: {
-        mercid: airpayMerchantId,
-        buyerEmail: email,
-        buyerFirstName: firstName,
-        buyerLastName: lastName,
-        buyerAddress: "NA",
-        buyerCity: "NA",
-        buyerState: "NA",
-        buyerCountry: "India",
-        buyerPhone: phone,
-        buyerPinCode: "000000",
-        amount: amountFormatted,
-        orderid: orderId,
+        mercid: mid,
+        buyerEmail: buyerEmail,
+        buyerFirstName: buyerFirstName,
+        buyerLastName: buyerLastName,
+        buyerAddress: buyerAddress,
+        buyerCity: buyerCity,
+        buyerState: buyerState,
+        buyerCountry: buyerCountry,
+        buyerPhone: buyerPhone,
+        buyerPinCode: buyerPinCode,
+        amount: amountValue,
+        orderid: orderid,
         currency: "356",
         isocurrency: "INR",
         privatekey: privatekey,
@@ -1428,41 +1427,58 @@ app.post("/api/airpay/callback", async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
     }
 
-    // Verify secure hash using CRC-32 (matching official v3 SDK)
-    let hashString =
-      TRANSACTIONID +
-      ":" +
-      APTRANSACTIONID +
-      ":" +
-      AMOUNT +
-      ":" +
-      TRANSACTIONSTATUS +
-      ":" +
-      MESSAGE +
-      ":" +
-      process.env.AIRPAY_MERCHANT_ID +
-      ":" +
-      process.env.AIRPAY_USERNAME
+    const mid = process.env.AIRPAY_MERCHANT_ID
+    const username = process.env.AIRPAY_USERNAME
 
-    // Special handling for UPI payments
-    if (CHMOD === "upi" && CUSTOMERVPA) {
-      hashString += ":" + CUSTOMERVPA
+    let txnhash = CRC32.str(
+      TRANSACTIONID +
+        ":" +
+        APTRANSACTIONID +
+        ":" +
+        AMOUNT +
+        ":" +
+        TRANSACTIONSTATUS +
+        ":" +
+        MESSAGE +
+        ":" +
+        mid +
+        ":" +
+        username,
+    )
+
+    const chmod = CHMOD
+    const custmvar = CUSTOMERVPA
+    if (chmod === "upi") {
+      txnhash = CRC32.str(
+        TRANSACTIONID +
+          ":" +
+          APTRANSACTIONID +
+          ":" +
+          AMOUNT +
+          ":" +
+          TRANSACTIONSTATUS +
+          ":" +
+          MESSAGE +
+          ":" +
+          mid +
+          ":" +
+          username +
+          ":" +
+          custmvar,
+      )
     }
 
-    const calculatedHash = (CRC32.str(hashString) >>> 0).toString()
+    txnhash = txnhash >>> 0
 
     console.log("[v0] Hash verification:")
-    console.log("[v0] - Calculated hash:", calculatedHash)
+    console.log("[v0] - Calculated hash:", txnhash)
     console.log("[v0] - Received hash:", ap_SecureHash)
-    console.log("[v0] - Hash string:", hashString)
 
-    // Verify hash matches
-    if (calculatedHash !== ap_SecureHash) {
+    if (txnhash.toString() !== ap_SecureHash) {
       console.error("[v0] Hash verification failed!")
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=invalid_hash`)
     }
 
-    // Check transaction status (200 = success)
     if (TRANSACTIONSTATUS === "200") {
       await Payment.findOneAndUpdate(
         { orderId: TRANSACTIONID },
