@@ -1519,14 +1519,19 @@ app.post("/api/airpay/create-payment", async (req, res) => {
 app.post("/api/airpay/callback", async (req, res) => {
   try {
     console.log("[v0] ========== AIRPAY V3 CALLBACK ==========")
-    console.log("[v0] Airpay callback received:", req.body)
+    console.log("[v0] Request method:", req.method)
+    console.log("[v0] Request headers:", JSON.stringify(req.headers, null, 2))
+    console.log("[v0] Request body:", JSON.stringify(req.body, null, 2))
+    console.log("[v0] Request query:", JSON.stringify(req.query, null, 2))
 
     const { TRANSACTIONID, APTRANSACTIONID, AMOUNT, TRANSACTIONSTATUS, MESSAGE, ap_SecureHash, CHMOD, CUSTOMERVPA } =
       req.body
 
     if (!TRANSACTIONID) {
-      console.error("[v0] Missing TRANSACTIONID")
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+      console.error("[v0] ❌ Missing TRANSACTIONID in Airpay callback")
+      console.error("[v0] This might mean Airpay is sending to wrong URL")
+      console.error("[v0] Expected URL: https://api.regentainternational.in/api/airpay/callback")
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=missing_txn_id`)
     }
 
     const mid = process.env.AIRPAY_MERCHANT_ID
@@ -1577,9 +1582,13 @@ app.post("/api/airpay/callback", async (req, res) => {
     console.log("[v0] - Received hash:", ap_SecureHash)
 
     if (txnhash.toString() !== ap_SecureHash) {
-      console.error("[v0] Hash verification failed!")
+      console.error("[v0] ❌ Hash verification failed!")
+      console.error("[v0] Payment might be tampered or invalid")
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=invalid_hash`)
     }
+
+    console.log("[v0] ✅ Hash verification successful")
+    console.log("[v0] Transaction status:", TRANSACTIONSTATUS)
 
     if (TRANSACTIONSTATUS === "200") {
       await Payment.findOneAndUpdate(
@@ -1601,17 +1610,21 @@ app.post("/api/airpay/callback", async (req, res) => {
 
       console.log("[v0] Payment successful")
       console.log("[v0] ========== END AIRPAY V3 CALLBACK ==========")
-      res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}`)
+      res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}&amount=${AMOUNT}`)
     } else {
       await Payment.findOneAndUpdate({ orderId: TRANSACTIONID }, { status: "failed", updatedAt: Date.now() })
 
-      console.log("[v0] Payment failed")
+      console.log("[v0] ❌ Payment failed, redirecting to failed page")
+      console.log("[v0] Failure reason:", MESSAGE)
       console.log("[v0] ========== END AIRPAY V3 CALLBACK ==========")
-      res.redirect(`${process.env.FRONTEND_URL}/payment/failed?txnId=${TRANSACTIONID}`)
+      res.redirect(
+        `${process.env.FRONTEND_URL}/payment/failed?txnId=${TRANSACTIONID}&reason=${encodeURIComponent(MESSAGE || "Payment failed")}`,
+      )
     }
   } catch (error) {
-    console.error("[v0] Error processing Airpay callback:", error)
-    res.redirect(`${process.env.FRONTEND_URL}/payment/failed`)
+    console.error("[v0] ❌ Error processing Airpay callback:", error)
+    console.error("[v0] Error stack:", error.stack)
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=processing_error`)
   }
 })
 
