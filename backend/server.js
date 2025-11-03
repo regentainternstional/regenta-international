@@ -752,17 +752,6 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-console.log("[v0] ========== ENVIRONMENT CONFIGURATION ==========")
-console.log("[v0] NODE_ENV:", process.env.NODE_ENV)
-console.log("[v0] PORT:", process.env.PORT)
-console.log("[v0] FRONTEND_URL:", process.env.FRONTEND_URL)
-console.log("[v0] SABPAISA_CALLBACK_URL:", process.env.SABPAISA_CALLBACK_URL)
-console.log("[v0] SABPAISA_CLIENT_CODE:", process.env.SABPAISA_CLIENT_CODE)
-console.log("[v0] PHONEPE_CALLBACK_URL:", process.env.PHONEPE_CALLBACK_URL)
-console.log("[v0] AIRPAY_CALLBACK_URL:", process.env.AIRPAY_CALLBACK_URL)
-console.log("[v0] AIRPAY_MERCHANT_ID:", process.env.AIRPAY_MERCHANT_ID)
-console.log("[v0] ========== END ENVIRONMENT CONFIGURATION ==========")
-
 
 // Middleware
 app.use(cors())
@@ -797,15 +786,6 @@ const phonePeClient = StandardCheckoutClient.getInstance(
   process.env.PHONEPE_ENV === "PRODUCTION" ? Env.PRODUCTION : Env.SANDBOX,
 )
 
-console.log("[v0] PhonePe configuration loaded:")
-console.log("[v0] - Client ID:", process.env.PHONEPE_CLIENT_ID)
-console.log("[v0] - Environment:", process.env.PHONEPE_ENV)
-
-// Airpay configuration logging
-console.log("[v0] Airpay configuration loaded:")
-console.log("[v0] - Merchant ID:", process.env.AIRPAY_MERCHANT_ID)
-console.log("[v0] - Username:", process.env.AIRPAY_USERNAME)
-console.log("[v0] - Client ID:", process.env.AIRPAY_CLIENT_ID)
 
 const airpayEncrypt = (data, key, ivHex) => {
   const cipher = crypto.createCipheriv("aes-256-cbc", Buffer.from(key, "utf-8"), Buffer.from(ivHex))
@@ -921,25 +901,6 @@ app.post("/get-gateway", async (req, res) => {
 })
 
 
-app.get("/api/debug/env", (req, res) => {
-  res.json({
-    message: "Environment Variables (sensitive data masked)",
-    PORT: process.env.PORT,
-    FRONTEND_URL: process.env.FRONTEND_URL,
-    SABPAISA_CALLBACK_URL: process.env.SABPAISA_CALLBACK_URL,
-    SABPAISA_CLIENT_CODE: process.env.SABPAISA_CLIENT_CODE,
-    SABPAISA_BASE_URL: process.env.SABPAISA_BASE_URL,
-    PHONEPE_CALLBACK_URL: process.env.PHONEPE_CALLBACK_URL,
-    PHONEPE_REDIRECT_URL: process.env.PHONEPE_REDIRECT_URL,
-    AIRPAY_CALLBACK_URL: process.env.AIRPAY_CALLBACK_URL,
-    AIRPAY_MERCHANT_ID: process.env.AIRPAY_MERCHANT_ID,
-    hasMongoUri: !!process.env.MONGODB_URI,
-    hasSabPaisaAuthKey: !!process.env.SABPAISA_AUTH_KEY,
-    hasSabPaisaAuthIV: !!process.env.SABPAISA_AUTH_IV,
-  })
-})
-
-
 // Routes
 app.get("/", (req, res) => {
   res.json({ message: "regent Backend Server is running!" })
@@ -998,33 +959,16 @@ app.post("/api/sabpaisa/create-payment", async (req, res) => {
 
 app.post("/api/sabpaisa/callback", async (req, res) => {
   try {
-    console.log("[v0] ========== SABPAISA CALLBACK (POST) ==========")
-    console.log("[v0] Request headers:", req.headers)
-    console.log("[v0] Request body:", req.body)
-    console.log("[v0] Request query:", req.query)
-
     const encData = req.body.encData || req.body.encResponse
 
     if (!encData) {
       console.error("[v0] ❌ CRITICAL ERROR: No encData in POST request")
-      console.error("[v0] This usually means:")
-      console.error("[v0] Request body keys:", Object.keys(req.body))
-      console.error("[v0] 1. SabPaisa sent POST to HTTP URL (not HTTPS)")
-      console.error("[v0] 2. Server redirected HTTP→HTTPS (301)")
-      console.error("[v0] 3. Browser converted POST to GET, losing POST body data")
-      console.error("[v0] ")
-      console.error("[v0] SOLUTION: Update SabPaisa merchant dashboard callback URL to:")
-      console.error("[v0] https://api.regentainternational.in/api/sabpaisa/callback")
-      console.error("[v0] (Make sure it's HTTPS, not HTTP)")
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=missing_data`)
     }
 
-     console.log("[v0] ✅ Encrypted data received, length:", encData.length)
-     
     let decryptedData
     try {
       decryptedData = decryptSabPaisa(encData)
-      console.log("[v0] Decrypted data:", decryptedData)
     } catch (decryptError) {
       console.error("[v0] Decryption failed:", decryptError)
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=decryption_failed`)
@@ -1034,10 +978,6 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
     const params = new URLSearchParams(decryptedData)
     const status = params.get("status")
     const transactionId = params.get("clientTxnId")
-
-    console.log("[v0] Status:", status)
-    console.log("[v0] Transaction ID:", transactionId)
-    console.log("[v0] All params:", Array.from(params.entries()))
 
     if (status && status.toUpperCase() === "SUCCESS") {
       await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "success", updatedAt: Date.now() })
@@ -1049,9 +989,6 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
           { processed: true, processedAt: Date.now() },
         )
       }
-
-      console.log("[v0] Payment successful, redirecting to success page")
-      console.log("[v0] ========== END SABPAISA CALLBACK ==========")
       // Redirect to success page
       res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${transactionId}`)
     } else {
@@ -1070,32 +1007,16 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
 
 app.get("/api/sabpaisa/callback", async (req, res) => {
   try {
-    console.log("[v0] ========== SABPAISA CALLBACK (GET) ==========")
-    console.log("[v0] ⚠️  WARNING: Received GET request instead of POST")
-    console.log("[v0] This usually means POST data was lost due to HTTP→HTTPS redirect")
-    console.log("[v0] Request headers:", req.headers)
-    console.log("[v0] Request query:", req.query)
-
-    // const { encData } = req.query
     const encData = req.query.encData || req.query.encResponse
 
     if (!encData) {
       console.error("[v0] ❌ CRITICAL ERROR: No encData or encResponse in GET request")
-      console.error("[v0] Query params:", Object.keys(req.query))
-      console.error("[v0] This confirms the HTTP→HTTPS redirect issue")
-      console.error("[v0] ")
-      console.error("[v0] SOLUTION: Contact SabPaisa support and ask them to update")
-      console.error("[v0] your merchant callback URL to HTTPS:")
-      console.error("[v0] https://api.regentainternational.in/api/sabpaisa/callback")
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=missing_data`)
     }
-
-    console.log("[v0] ✅ Encrypted data received, length:", encData.length)
 
     let decryptedData
     try {
       decryptedData = decryptSabPaisa(encData)
-      console.log("[v0] Decrypted data:", decryptedData)
     } catch (decryptError) {
       console.error("[v0] Decryption failed:", decryptError)
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=decryption_failed`)
@@ -1105,10 +1026,6 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
     const params = new URLSearchParams(decryptedData)
     const status = params.get("status")
     const transactionId = params.get("clientTxnId")
-
-    console.log("[v0] Status:", status)
-    console.log("[v0] Transaction ID:", transactionId)
-    console.log("[v0] All params:", Array.from(params.entries()))
 
     if (status && status.toUpperCase() === "SUCCESS") {
       await Payment.findOneAndUpdate({ paymentSessionId: transactionId }, { status: "success", updatedAt: Date.now() })
@@ -1121,8 +1038,6 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
         )
       }
 
-      console.log("[v0] Payment successful, redirecting to success page")
-      console.log("[v0] ========== END SABPAISA CALLBACK ==========")
       // Redirect to success page
       res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${transactionId}`)
     } else {
@@ -1141,7 +1056,6 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
 
 app.post("/api/phonepe/create-payment", async (req, res) => {
   try {
-    console.log("[v0] ========== PHONEPE PAYMENT REQUEST ==========")
     console.log("[v0] Request body:", JSON.stringify(req.body, null, 2))
 
     const { order_id, amount, name, phone, email } = req.body
@@ -1154,8 +1068,6 @@ app.post("/api/phonepe/create-payment", async (req, res) => {
     const merchantOrderId = order_id || `ORDER_${Date.now()}`
     const amountInPaisa = Math.round(Number.parseFloat(amount) * 100) // Convert to paisa
 
-    console.log("[v0] Order ID:", merchantOrderId)
-    console.log("[v0] Amount in paisa:", amountInPaisa)
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(merchantOrderId)
@@ -1163,11 +1075,9 @@ app.post("/api/phonepe/create-payment", async (req, res) => {
       .redirectUrl(process.env.PHONEPE_REDIRECT_URL || `${process.env.FRONTEND_URL}/payment/status`)
       .build()
 
-    console.log("[v0] Creating PhonePe payment...")
 
     const response = await phonePeClient.pay(request)
 
-    console.log("[v0] PhonePe response:", response)
 
     const paymentUrl = response?.redirectUrl
 
@@ -1187,10 +1097,6 @@ app.post("/api/phonepe/create-payment", async (req, res) => {
       status: "initiated",
     })
 
-    console.log("[v0] Payment record created in database")
-    console.log("[v0] Payment URL:", paymentUrl)
-    console.log("[v0] ========== END PHONEPE REQUEST ==========")
-
     res.json({
       success: true,
       paymentUrl: paymentUrl,
@@ -1208,8 +1114,6 @@ app.post("/api/phonepe/create-payment", async (req, res) => {
 
 app.post("/api/phonepe/callback", async (req, res) => {
   try {
-    console.log("[v0] PhonePe callback received:", req.body)
-
     const { merchantOrderId, transactionId, status } = req.body
 
     if (!merchantOrderId) {
@@ -1250,8 +1154,6 @@ app.post("/api/phonepe/callback", async (req, res) => {
 app.get("/api/phonepe/status/:merchantOrderId", async (req, res) => {
   try {
     const { merchantOrderId } = req.params
-
-    console.log("[v0] Checking PhonePe payment status for:", merchantOrderId)
 
     // Check status from database
     const payment = await Payment.findOne({ orderId: merchantOrderId })
@@ -1425,9 +1327,6 @@ app.delete("/uploaded-data/:id", async (req, res) => {
 
 app.post("/api/airpay/create-payment", async (req, res) => {
   try {
-    console.log("[v0] ========== AIRPAY V3 PAYMENT REQUEST ==========")
-    console.log("[v0] Request body:", JSON.stringify(req.body, null, 2))
-
     const { order_id, amount, name, phone, email } = req.body
 
     if (!amount || !name || !email || !phone) {
@@ -1466,18 +1365,11 @@ app.post("/api/airpay/create-payment", async (req, res) => {
       amountValue +
       orderid
 
-    console.log("[v0] All data (without date):", alldata)
-
     const udata = username + ":|:" + password
     const privatekey = crypto
       .createHash("sha256")
       .update(secret + "@" + udata)
       .digest("hex")
-
-    console.log("[v0] Private key calculation:")
-    console.log("[v0] - udata:", udata)
-    console.log("[v0] - privatekey string:", secret + "@" + udata)
-    console.log("[v0] - privatekey:", privatekey)
 
     const keySha256 = crypto
       .createHash("sha256")
@@ -1490,19 +1382,11 @@ app.post("/api/airpay/create-payment", async (req, res) => {
     const currentDate = dateformat(now, "yyyy-mm-dd")
     const aldata = alldata + currentDate
 
-    console.log("[v0] Checksum calculation:")
-    console.log("[v0] - keySha256 string:", username + "~:~" + password)
-    console.log("[v0] - keySha256:", keySha256)
-    console.log("[v0] - Current date:", currentDate)
-    console.log("[v0] - aldata (with date):", aldata)
-    console.log("[v0] - Checksum string:", keySha256 + "@" + aldata)
-
     const checksum = crypto
       .createHash("sha256")
       .update(keySha256 + "@" + aldata)
       .digest("hex")
 
-    console.log("[v0] - Final checksum:", checksum)
 
     const paymentUrl = "https://payments.airpay.co.in/pay/index.php"
 
@@ -1517,9 +1401,6 @@ app.post("/api/airpay/create-payment", async (req, res) => {
       status: "initiated",
     })
 
-    console.log("[v0] Payment record created in database")
-    console.log("[v0] Payment URL:", paymentUrl)
-    console.log("[v0] ========== END AIRPAY V3 REQUEST ==========")
 
     res.json({
       success: true,
@@ -1557,12 +1438,6 @@ app.post("/api/airpay/create-payment", async (req, res) => {
 
 app.post("/api/airpay/callback", async (req, res) => {
   try {
-    console.log("[v0] ========== AIRPAY V3 CALLBACK ==========")
-    console.log("[v0] Request method:", req.method)
-    console.log("[v0] Request headers:", JSON.stringify(req.headers, null, 2))
-    console.log("[v0] Request body:", JSON.stringify(req.body, null, 2))
-    console.log("[v0] Request query:", JSON.stringify(req.query, null, 2))
-
     const { TRANSACTIONID, APTRANSACTIONID, AMOUNT, TRANSACTIONSTATUS, MESSAGE, ap_SecureHash, CHMOD, CUSTOMERVPA } =
       req.body
 
@@ -1616,18 +1491,12 @@ app.post("/api/airpay/callback", async (req, res) => {
 
     txnhash = txnhash >>> 0
 
-    console.log("[v0] Hash verification:")
-    console.log("[v0] - Calculated hash:", txnhash)
-    console.log("[v0] - Received hash:", ap_SecureHash)
 
     if (txnhash.toString() !== ap_SecureHash) {
       console.error("[v0] ❌ Hash verification failed!")
       console.error("[v0] Payment might be tampered or invalid")
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=invalid_hash`)
     }
-
-    console.log("[v0] ✅ Hash verification successful")
-    console.log("[v0] Transaction status:", TRANSACTIONSTATUS)
 
     if (TRANSACTIONSTATUS === "200") {
       await Payment.findOneAndUpdate(
@@ -1647,8 +1516,6 @@ app.post("/api/airpay/callback", async (req, res) => {
         )
       }
 
-      console.log("[v0] Payment successful")
-      console.log("[v0] ========== END AIRPAY V3 CALLBACK ==========")
       res.redirect(`${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}&amount=${AMOUNT}`)
     } else {
       await Payment.findOneAndUpdate({ orderId: TRANSACTIONID }, { status: "failed", updatedAt: Date.now() })
