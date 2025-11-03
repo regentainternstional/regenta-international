@@ -933,7 +933,7 @@ app.post("/api/sabpaisa/create-payment", async (req, res) => {
         2,
       )}&clientCode=${process.env.SABPAISA_CLIENT_CODE}` +
       `&transUserName=${process.env.SABPAISA_USERNAME}&transUserPassword=${process.env.SABPAISA_PASSWORD}` +
-      `&callbackUrl=${process.env.SABPAISA_CALLBACK_URL || `http://localhost:5000/api/sabpaisa/callback`}` +
+      `&callbackUrl=${process.env.SABPAISA_CALLBACK_URL || `https://api.regentainternational.in/api/sabpaisa/callback`}` +
       `&channelId=W&mcc=6012&transData=${transData}&udf1=${order_id || ""}&udf2=`
     // Encrypt the data
     const encData = encryptSabPaisa(dataString)
