@@ -1003,11 +1003,12 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
     console.log("[v0] Request body:", req.body)
     console.log("[v0] Request query:", req.query)
 
-    const { encData } = req.body
+    const encData = req.body.encData || req.body.encResponse
 
     if (!encData) {
       console.error("[v0] ❌ CRITICAL ERROR: No encData in POST request")
       console.error("[v0] This usually means:")
+      console.error("[v0] Request body keys:", Object.keys(req.body))
       console.error("[v0] 1. SabPaisa sent POST to HTTP URL (not HTTPS)")
       console.error("[v0] 2. Server redirected HTTP→HTTPS (301)")
       console.error("[v0] 3. Browser converted POST to GET, losing POST body data")
@@ -1018,6 +1019,8 @@ app.post("/api/sabpaisa/callback", async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=missing_data`)
     }
 
+     console.log("[v0] ✅ Encrypted data received, length:", encData.length)
+     
     let decryptedData
     try {
       decryptedData = decryptSabPaisa(encData)
@@ -1073,10 +1076,12 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
     console.log("[v0] Request headers:", req.headers)
     console.log("[v0] Request query:", req.query)
 
-    const { encData } = req.query
+    // const { encData } = req.query
+    const encData = req.query.encData || req.query.encResponse
 
     if (!encData) {
-      console.error("[v0] ❌ CRITICAL ERROR: No encData in GET request")
+      console.error("[v0] ❌ CRITICAL ERROR: No encData or encResponse in GET request")
+      console.error("[v0] Query params:", Object.keys(req.query))
       console.error("[v0] This confirms the HTTP→HTTPS redirect issue")
       console.error("[v0] ")
       console.error("[v0] SOLUTION: Contact SabPaisa support and ask them to update")
@@ -1084,6 +1089,8 @@ app.get("/api/sabpaisa/callback", async (req, res) => {
       console.error("[v0] https://api.regentainternational.in/api/sabpaisa/callback")
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=missing_data`)
     }
+
+    console.log("[v0] ✅ Encrypted data received, length:", encData.length)
 
     let decryptedData
     try {
