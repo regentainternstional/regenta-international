@@ -752,6 +752,18 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
+console.log("[v0] ========== ENVIRONMENT CONFIGURATION ==========")
+console.log("[v0] NODE_ENV:", process.env.NODE_ENV)
+console.log("[v0] PORT:", process.env.PORT)
+console.log("[v0] FRONTEND_URL:", process.env.FRONTEND_URL)
+console.log("[v0] SABPAISA_CALLBACK_URL:", process.env.SABPAISA_CALLBACK_URL)
+console.log("[v0] SABPAISA_CLIENT_CODE:", process.env.SABPAISA_CLIENT_CODE)
+console.log("[v0] PHONEPE_CALLBACK_URL:", process.env.PHONEPE_CALLBACK_URL)
+console.log("[v0] AIRPAY_CALLBACK_URL:", process.env.AIRPAY_CALLBACK_URL)
+console.log("[v0] AIRPAY_MERCHANT_ID:", process.env.AIRPAY_MERCHANT_ID)
+console.log("[v0] ========== END ENVIRONMENT CONFIGURATION ==========")
+
+
 // Middleware
 app.use(cors())
 app.use(
@@ -907,6 +919,26 @@ app.post("/get-gateway", async (req, res) => {
     res.status(500).json({ error: "Failed to determine payment gateway" })
   }
 })
+
+
+app.get("/api/debug/env", (req, res) => {
+  res.json({
+    message: "Environment Variables (sensitive data masked)",
+    PORT: process.env.PORT,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    SABPAISA_CALLBACK_URL: process.env.SABPAISA_CALLBACK_URL,
+    SABPAISA_CLIENT_CODE: process.env.SABPAISA_CLIENT_CODE,
+    SABPAISA_BASE_URL: process.env.SABPAISA_BASE_URL,
+    PHONEPE_CALLBACK_URL: process.env.PHONEPE_CALLBACK_URL,
+    PHONEPE_REDIRECT_URL: process.env.PHONEPE_REDIRECT_URL,
+    AIRPAY_CALLBACK_URL: process.env.AIRPAY_CALLBACK_URL,
+    AIRPAY_MERCHANT_ID: process.env.AIRPAY_MERCHANT_ID,
+    hasMongoUri: !!process.env.MONGODB_URI,
+    hasSabPaisaAuthKey: !!process.env.SABPAISA_AUTH_KEY,
+    hasSabPaisaAuthIV: !!process.env.SABPAISA_AUTH_IV,
+  })
+})
+
 
 // Routes
 app.get("/", (req, res) => {
