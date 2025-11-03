@@ -1,161 +1,127 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalPayments: 0,
     totalAmount: 0,
-    cashfreeCount: 0,
-    razorpayCount: 0,
+    airPayCount: 0,
+    phonePeCount: 0,
+    sabPaisaCount: 0,
     successCount: 0,
-    pendingCount: 0,
-  });
-  const [loading, setLoading] = useState(true);
+    initiatedCount: 0,
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    fetchStats()
+  }, [])
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_API}/payments`);
-      const data = await res.json();
-      const successfulPayments = data.filter((p) => p.status === "SUCCESS");
-      const totalAmount = successfulPayments.reduce(
-        (sum, payment) => sum + payment.amount,
-        0
-      );
-      const cashfreeCount = data.filter((p) => p.gateway === "cashfree").length;
-      const razorpayCount = data.filter((p) => p.gateway === "razorpay").length;
-      const successCount = successfulPayments.length;
-      const pendingCount = data.filter(
-        (p) => p.status === "PENDING" || p.status === "initiated"
-      ).length;
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_API}/payments`)
+      const data = await res.json()
+      console.log("data: ", data)
+      const successfulPayments = data.filter((p) => p.status === "success")
+      const totalAmount = successfulPayments.reduce((sum, payment) => sum + payment.amount, 0)
+      const sabPaisaCount = data.filter((p) => p.gateway === "sabpaisa").length
+      const phonePeCount = data.filter((p) => p.gateway === "phonepe").length
+      const airPayCount = data.filter((p) => p.gateway === "airpay").length
+      const successCount = successfulPayments.length
+      const initiatedCount = data.filter((p) => p.status === "PENDING" || p.status === "initiated").length
 
       setStats({
-        totalPayments: successCount, // Show only successful payments count
+        totalPayments: successCount,
         totalAmount,
-        cashfreeCount,
-        razorpayCount,
+        sabPaisaCount,
+        phonePeCount,
+        airPayCount,
         successCount,
-        pendingCount,
-      });
+        initiatedCount,
+      })
     } catch (error) {
-      console.error("Error fetching stats:", error);
+      console.error("Error fetching stats:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const StatCard = ({ title, value, icon, color }) => (
-    <div className={`bg-white p-6 rounded-lg shadow-md border-l-4 ${color}`}>
+    <div
+      className={`bg-white p-4 md:p-6 rounded-lg shadow-md border-l-4 ${color} hover:shadow-lg transition-all duration-300`}
+    >
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-600 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-gray-600 text-xs md:text-sm font-medium truncate">{title}</p>
+          <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-1 md:mt-2 break-words">{value}</p>
         </div>
-        <div className="text-4xl">{icon}</div>
+        <div className="text-3xl md:text-4xl ml-2 flex-shrink-0">{icon}</div>
       </div>
     </div>
-  );
+  )
+
+  const GatewayBar = ({ name, count, total, color }) => {
+    const percentage = total > 0 ? (count / total) * 100 : 0
+
+    return (
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm md:text-base text-gray-700 font-medium truncate">{name}</span>
+          <span className="text-sm md:text-base font-semibold text-gray-900 ml-2">{count}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-3 md:h-4 overflow-hidden shadow-inner">
+          <div
+            className={`${color} h-full rounded-full transition-all duration-700 ease-out`}
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+        {/* <p className="text-xs md:text-sm text-gray-500 mt-1.5 font-medium">{percentage.toFixed(1)}%</p> */}
+      </div>
+    )
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-xl text-gray-600">Loading dashboard...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <div className="text-lg md:text-xl text-gray-600">Loading dashboard...</div>
+        </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Overview</h2>
+    <div className="space-y-6 md:space-y-8 p-4 md:p-0">
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800">Overview</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <StatCard
-          title="Total Payments"
-          value={stats.totalPayments}
-          icon="📊"
-          color="border-blue-500"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <StatCard title="Total Payments" value={stats.totalPayments} icon="📊" color="border-blue-500" />
         <StatCard
           title="Total Amount"
           value={`₹${stats.totalAmount.toLocaleString()}`}
           icon="💰"
           color="border-green-500"
         />
-        <StatCard
-          title="Successful"
-          value={stats.successCount}
-          icon="✅"
-          color="border-emerald-500"
-        />
-        <StatCard
-          title="Cashfree Payments"
-          value={stats.cashfreeCount}
-          icon="💳"
-          color="border-purple-500"
-        />
-        <StatCard
-          title="Razorpay Payments"
-          value={stats.razorpayCount}
-          icon="💳"
-          color="border-indigo-500"
-        />
-        <StatCard
-          title="Pending"
-          value={stats.pendingCount}
-          icon="⏳"
-          color="border-yellow-500"
-        />
+        <StatCard title="Successful" value={stats.successCount} icon="✅" color="border-emerald-500" />
+        <StatCard title="SabPaisa Payments" value={stats.sabPaisaCount} icon="💳" color="border-purple-500" />
+        <StatCard title="PhonePe Payments" value={stats.phonePeCount} icon="📱" color="border-indigo-500" />
+        <StatCard title="Airpay Payments" value={stats.airPayCount} icon="✈️" color="border-cyan-500" />
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="bg-white p-4 md:p-6 lg:p-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+        <h3 className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 mb-4 md:mb-6">
           Gateway Distribution
         </h3>
-        <div className="flex gap-8">
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-700">Cashfree</span>
-              <span className="font-semibold">{stats.cashfreeCount}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-purple-500 h-3 rounded-full"
-                style={{
-                  width: `${
-                    stats.totalPayments > 0
-                      ? (stats.cashfreeCount / stats.totalPayments) * 100
-                      : 0
-                  }%`,
-                }}
-              ></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-700">Razorpay</span>
-              <span className="font-semibold">{stats.razorpayCount}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-indigo-500 h-3 rounded-full"
-                style={{
-                  width: `${
-                    stats.totalPayments > 0
-                      ? (stats.razorpayCount / stats.totalPayments) * 100
-                      : 0
-                  }%`,
-                }}
-              ></div>
-            </div>
-          </div>
+        <div className="flex flex-col md:flex-row gap-6 md:gap-6 lg:gap-8">
+          <GatewayBar name="SabPaisa" count={stats.sabPaisaCount} total={stats.totalPayments} color="bg-purple-500" />
+          <GatewayBar name="PhonePe" count={stats.phonePeCount} total={stats.totalPayments} color="bg-indigo-500" />
+          <GatewayBar name="AirPay" count={stats.airPayCount} total={stats.totalPayments} color="bg-cyan-500" />
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AdminDashboard;
+export default AdminDashboard
