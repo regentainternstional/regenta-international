@@ -22,7 +22,6 @@ const AdminDashboard = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_API}/payments`)
       const data = await res.json()
-      console.log("data: ", data)
       const successfulPayments = data.filter((p) => p.status === "success")
       const totalAmount = successfulPayments.reduce((sum, payment) => sum + payment.amount, 0)
       const sabPaisaCount = data.filter((p) => p.gateway === "sabpaisa").length
