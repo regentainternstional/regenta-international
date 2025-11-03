@@ -431,7 +431,6 @@ const getApiUrl = () => {
   const apiUrl =
     import.meta.env.VITE_BACKEND_API || import.meta.env.VITE_API_BASE_URL || "https://regentainternational.in"
 
-  console.log("[v0] Using API URL:", apiUrl)
   return apiUrl
 }
 
@@ -544,8 +543,6 @@ export default function Payment() {
     try {
       const orderId = "order_" + Date.now()
       const apiUrl = getApiUrl()
-      console.log("[v0] Starting payment process with order:", orderId)
-      console.log("[v0] API URL:", apiUrl)
 
       const gatewayRes = await fetch(`${apiUrl}/get-gateway`, {
         method: "POST",
@@ -557,7 +554,6 @@ export default function Payment() {
       }
 
       const { gateway } = await gatewayRes.json()
-      console.log(`[v0] Using ${gateway} gateway`)
 
       if (gateway === "sabpaisa") {
         const response = await axios.post(`${apiUrl}/api/sabpaisa/create-payment`, {
@@ -598,7 +594,6 @@ export default function Payment() {
           setLoading(false)
         }
       } else if (gateway === "phonepe") {
-        console.log("[v0] Creating PhonePe payment...")
         const response = await axios.post(`${apiUrl}/api/phonepe/create-payment`, {
           amount: Number.parseFloat(formData.amount),
           name: formData.name,
@@ -607,10 +602,7 @@ export default function Payment() {
           order_id: orderId,
         })
 
-        console.log("[v0] PhonePe response:", response.data)
-
         if (response.data.success && response.data.paymentUrl) {
-          console.log("[v0] Redirecting to PhonePe payment page:", response.data.paymentUrl)
 
           if (autofillDataId) {
             await fetch(`${apiUrl}/mark-data-processed`, {
@@ -627,7 +619,6 @@ export default function Payment() {
           setLoading(false)
         }
       } else if (gateway === "airpay") {
-        console.log("[v0] Creating Airpay v3 payment...")
         const response = await axios.post(`${apiUrl}/api/airpay/create-payment`, {
           amount: Number.parseFloat(formData.amount),
           name: formData.name,
@@ -636,11 +627,7 @@ export default function Payment() {
           order_id: orderId,
         })
 
-        console.log("[v0] Airpay v3 response:", response.data)
-
         if (response.data.success && response.data.paymentUrl) {
-          console.log("[v0] Redirecting to Airpay v3 payment page:", response.data.paymentUrl)
-
           const form = document.createElement("form")
           form.method = "POST"
           form.action = response.data.paymentUrl
