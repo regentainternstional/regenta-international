@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaBars, FaTimes } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +30,7 @@ const Navbar = () => {
           <li onClick={() => handleNavClick('services')} className="hover:text-blue-600 cursor-pointer">Our Services</li>
           <li onClick={() => handleNavClick('testimonials')} className="hover:text-blue-600 cursor-pointer">Testimonials</li>
           <li onClick={() => handleNavClick('faq')} className="hover:text-blue-600 cursor-pointer">FAQ</li>
-          <li onClick={() => handleNavClick('footer')} className="hover:text-blue-600 cursor-pointer">Footer</li>
+          <Link to='contact-us' className="hover:text-blue-600 cursor-pointer">Contact</Link>
         </ul>
 
         {/* Contact Us Button */}
@@ -52,9 +53,10 @@ const Navbar = () => {
             <li onClick={() => handleNavClick('testimonials')} className="hover:text-blue-600 cursor-pointer">Testimonials</li>
             <li onClick={() => handleNavClick('faq')} className="hover:text-blue-600 cursor-pointer">FAQ</li>
             <li onClick={() => handleNavClick('footer')} className="hover:text-blue-600 cursor-pointer">Footer</li>
-            <button className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md font-medium w-full text-center shadow-sm">
+            <li onClick={() => handleNavClick('contact-us')} className="hover:text-blue-600 cursor-pointer">Contact</li>
+            <Link to='contact-us' className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md font-medium w-full text-center shadow-sm">
               Contact Us
-            </button>
+            </Link>
           </ul>
         )}
       </nav>

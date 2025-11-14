@@ -13,6 +13,8 @@ import AdminLogin from "./Components/AdminLogin";
 import PaymentStatus from "./Components/PaymentStatus/PaymentSuccess";
 import PaymentSuccess from "./Components/PaymentStatus/PaymentSuccess";
 import PaymentFailed from "./Components/PaymentStatus/PaymentFailed";
+import ContactUs from "./Components/Contact";
+import ContactUsPage from "./Components/ConatctUsPage";
 
 const App = () => {
   return (
@@ -22,6 +24,7 @@ const App = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/return" element={<Return />} />
+        <Route path="/contact-us" element={<ContactUsPage />} />
         <Route path="/payment/:id" element={<Payment />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/payment/status" element={<PaymentStatus />} />

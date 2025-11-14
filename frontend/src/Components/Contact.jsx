@@ -81,13 +81,6 @@ const ContactUs = () => {
           </ul>
 
           <div className="mt-10">
-            {/* <iframe
-              title="Google Map"
-              className="w-full rounded-xl h-56 border-0"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3430.2577306122453!2d78.03219121512096!3d30.31649548177213!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3909298b99f10fbd%3A0x9aa4cf2e4a40df5c!2sClock%20Tower%2C%20Dehradun!5e0!3m2!1sen!2sin!4v1619773366769!5m2!1sen!2sin"
-              allowFullScreen=""
-              loading="lazy"
-            ></iframe> */}
             <img src={Contact} alt="contact-us" />
           </div>
         </div>
