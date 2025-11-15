@@ -421,91 +421,98 @@
 //   );
 // }
 
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import axios from "axios"
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { load } from "@cashfreepayments/cashfree-js"
 
 const getApiUrl = () => {
   const apiUrl =
-    import.meta.env.VITE_BACKEND_API || import.meta.env.VITE_API_BASE_URL || "https://regentainternational.in"
+    import.meta.env.VITE_BACKEND_API ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://regentainternational.in";
 
-  return apiUrl
-}
+  return apiUrl;
+};
 
 export default function Payment() {
-  const { id: service } = useParams()
-  const navigate = useNavigate()
-  const decodedService = decodeURIComponent(service)
+  const { id: service } = useParams();
+  const navigate = useNavigate();
+  const decodedService = decodeURIComponent(service);
 
   const [formData, setFormData] = useState({
     amount: "",
     name: "",
     phone: "",
     email: "",
-  })
-  const [lastName, setLastName] = useState("")
-  const [autofillDataId, setAutofillDataId] = useState(null)
+  });
+  const [lastName, setLastName] = useState("");
+  const [autofillDataId, setAutofillDataId] = useState(null);
   const [errors, setErrors] = useState({
     amount: "",
     name: "",
     phone: "",
     email: "",
-  })
+  });
 
-  const [loading, setLoading] = useState(false)
-  const [generalError, setGeneralError] = useState("")
+  const [loading, setLoading] = useState(false);
+  const [generalError, setGeneralError] = useState("");
 
   const validateForm = () => {
-    const newErrors = { amount: "", name: "", phone: "", email: "" }
-    let isValid = true
+    const newErrors = { amount: "", name: "", phone: "", email: "" };
+    let isValid = true;
 
     if (!formData.amount) {
-      newErrors.amount = "Amount is required."
-      isValid = false
-    } else if (isNaN(formData.amount) || Number.parseFloat(formData.amount) <= 0) {
-      newErrors.amount = "Amount must be a positive number."
-      isValid = false
+      newErrors.amount = "Amount is required.";
+      isValid = false;
+    } else if (
+      isNaN(formData.amount) ||
+      Number.parseFloat(formData.amount) <= 0
+    ) {
+      newErrors.amount = "Amount must be a positive number.";
+      isValid = false;
     }
 
     if (!formData.name) {
-      newErrors.name = "First Name is required."
-      isValid = false
+      newErrors.name = "First Name is required.";
+      isValid = false;
     } else if (!/^[a-zA-Z\s'-]+$/.test(formData.name)) {
-      newErrors.name = "Name can only contain letters, spaces, hyphens, or apostrophes."
-      isValid = false
+      newErrors.name =
+        "Name can only contain letters, spaces, hyphens, or apostrophes.";
+      isValid = false;
     }
 
     if (!formData.phone) {
-      newErrors.phone = "Phone number is required."
-      isValid = false
+      newErrors.phone = "Phone number is required.";
+      isValid = false;
     } else if (!/^\d{10}$/.test(formData.phone)) {
-      newErrors.phone = "Phone number must be exactly 10 digits."
-      isValid = false
+      newErrors.phone = "Phone number must be exactly 10 digits.";
+      isValid = false;
     }
 
     if (!formData.email) {
-      newErrors.email = "Email is required."
-      isValid = false
+      newErrors.email = "Email is required.";
+      isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address."
-      isValid = false
+      newErrors.email = "Please enter a valid email address.";
+      isValid = false;
     }
 
-    setErrors(newErrors)
-    return isValid
-  }
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    setErrors((prev) => ({ ...prev, [name]: "" }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
   const handleLastNameChange = async (e) => {
-    const value = e.target.value
-    setLastName(value)
+    const value = e.target.value;
+    setLastName(value);
 
     if (value.trim()) {
       try {
@@ -513,9 +520,9 @@ export default function Payment() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code: value }),
-        })
+        });
 
-        const data = await res.json()
+        const data = await res.json();
 
         if (data.success) {
           setFormData({
@@ -523,157 +530,219 @@ export default function Payment() {
             name: data.data.name,
             phone: data.data.phone,
             email: data.data.email,
-          })
-          setAutofillDataId(data.data.id)
+          });
+          setAutofillDataId(data.data.id);
         }
       } catch (error) {
-        console.error("Error verifying code:", error)
+        console.error("Error verifying code:", error);
       }
     }
-  }
+  };
+
+  const handleCashfreePayment = async (payment_session_id) => {
+    const cashfree = await load({ mode: "production" });
+
+    await cashfree.checkout({
+      paymentSessionId: payment_session_id,
+      redirectTarget: "_self",
+    });
+
+    // Note: For Cashfree, you'll need to handle the success callback on your return URL
+    // and mark the data as processed there
+    if (autofillDataId) {
+      await fetch(`${getApiUrl()}/mark-data-processed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataId: autofillDataId }),
+      });
+    }
+  };
 
   const handlePayment = async (e) => {
-    e.preventDefault()
-    setGeneralError("")
+    e.preventDefault();
+    setGeneralError("");
     if (!validateForm()) {
-      return
+      return;
     }
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const orderId = "order_" + Date.now()
-      const apiUrl = getApiUrl()
+      const orderId = "order_" + Date.now();
+      const apiUrl = getApiUrl();
 
       const gatewayRes = await fetch(`${apiUrl}/get-gateway`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-      })
+      });
 
       if (!gatewayRes.ok) {
-        throw new Error("Failed to determine payment gateway")
+        throw new Error("Failed to determine payment gateway");
       }
 
-      const { gateway } = await gatewayRes.json()
+      const { gateway } = await gatewayRes.json();
 
       if (gateway === "sabpaisa") {
-        const response = await axios.post(`${apiUrl}/api/sabpaisa/create-payment`, {
-          amount: Number.parseFloat(formData.amount),
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          order_id: orderId,
-        })
+        const response = await axios.post(
+          `${apiUrl}/api/sabpaisa/create-payment`,
+          {
+            amount: Number.parseFloat(formData.amount),
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            order_id: orderId,
+          }
+        );
         if (response.data.success) {
-          const form = document.createElement("form")
-          form.method = "POST"
-          form.action = response.data.paymentUrl
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = response.data.paymentUrl;
 
-          const encDataInput = document.createElement("input")
-          encDataInput.type = "hidden"
-          encDataInput.name = "encData"
-          encDataInput.value = response.data.encData
-          form.appendChild(encDataInput)
+          const encDataInput = document.createElement("input");
+          encDataInput.type = "hidden";
+          encDataInput.name = "encData";
+          encDataInput.value = response.data.encData;
+          form.appendChild(encDataInput);
 
-          const clientCodeInput = document.createElement("input")
-          clientCodeInput.type = "hidden"
-          clientCodeInput.name = "clientCode"
-          clientCodeInput.value = response.data.clientCode
-          form.appendChild(clientCodeInput)
-          document.body.appendChild(form)
-          form.submit()
+          const clientCodeInput = document.createElement("input");
+          clientCodeInput.type = "hidden";
+          clientCodeInput.name = "clientCode";
+          clientCodeInput.value = response.data.clientCode;
+          form.appendChild(clientCodeInput);
+          document.body.appendChild(form);
+          form.submit();
 
           if (autofillDataId) {
             await fetch(`${apiUrl}/mark-data-processed`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ dataId: autofillDataId }),
-            })
+            });
           }
         } else {
-          setGeneralError("Failed to initiate payment. Please try again.")
-          setLoading(false)
+          setGeneralError("Failed to initiate payment. Please try again.");
+          setLoading(false);
         }
       } else if (gateway === "phonepe") {
-        const response = await axios.post(`${apiUrl}/api/phonepe/create-payment`, {
-          amount: Number.parseFloat(formData.amount),
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          order_id: orderId,
-        })
+        const response = await axios.post(
+          `${apiUrl}/api/phonepe/create-payment`,
+          {
+            amount: Number.parseFloat(formData.amount),
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            order_id: orderId,
+          }
+        );
 
         if (response.data.success && response.data.paymentUrl) {
-
           if (autofillDataId) {
             await fetch(`${apiUrl}/mark-data-processed`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ dataId: autofillDataId }),
-            })
+            });
           }
 
-          window.location.href = response.data.paymentUrl
+          window.location.href = response.data.paymentUrl;
         } else {
-          console.error("[v0] PhonePe payment creation failed:", response.data)
-          setGeneralError("Failed to initiate payment. Please try again.")
-          setLoading(false)
+          console.error("[v0] PhonePe payment creation failed:", response.data);
+          setGeneralError("Failed to initiate payment. Please try again.");
+          setLoading(false);
         }
       } else if (gateway === "airpay") {
-        const response = await axios.post(`${apiUrl}/api/airpay/create-payment`, {
-          amount: Number.parseFloat(formData.amount),
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          order_id: orderId,
-        })
+        const response = await axios.post(
+          `${apiUrl}/api/airpay/create-payment`,
+          {
+            amount: Number.parseFloat(formData.amount),
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            order_id: orderId,
+          }
+        );
 
         if (response.data.success && response.data.paymentUrl) {
-          const form = document.createElement("form")
-          form.method = "POST"
-          form.action = response.data.paymentUrl
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = response.data.paymentUrl;
 
           // Add all payment data fields as individual form inputs
-          const paymentData = response.data.paymentData
+          const paymentData = response.data.paymentData;
           for (const [key, value] of Object.entries(paymentData)) {
-            const input = document.createElement("input")
-            input.type = "hidden"
-            input.name = key
-            input.value = value
-            form.appendChild(input)
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
           }
 
-          document.body.appendChild(form)
+          document.body.appendChild(form);
 
           if (autofillDataId) {
             await fetch(`${apiUrl}/mark-data-processed`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ dataId: autofillDataId }),
-            })
+            });
           }
 
-          form.submit()
+          form.submit();
         } else {
-          console.error("[v0] Airpay payment creation failed:", response.data)
-          setGeneralError("Failed to initiate payment. Please try again.")
-          setLoading(false)
+          console.error("[v0] Airpay payment creation failed:", response.data);
+          setGeneralError("Failed to initiate payment. Please try again.");
+          setLoading(false);
         }
+      } else if (gateway === "cashfree") {
+        // Create Cashfree order
+        const res = await fetch(`${getApiUrl()}/api/cashfree/create-order`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: orderId,
+            amount: Number.parseFloat(formData.amount),
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to create Cashfree order");
+        }
+
+        const data = await res.json();
+        const { payment_session_id } = data;
+
+        if (!payment_session_id) {
+          throw new Error("No payment_session_id received");
+        }
+
+        await handleCashfreePayment(payment_session_id);
       }
     } catch (error) {
-      console.error("[v0] Payment error:", error)
-      console.error("[v0] Error details:", error.response?.data || error.message)
-      setGeneralError("Failed to initiate payment. Please try again.")
-      setLoading(false)
+      console.error("[v0] Payment error:", error);
+      console.error(
+        "[v0] Error details:",
+        error.response?.data || error.message
+      );
+      setGeneralError("Failed to initiate payment. Please try again.");
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-6 text-black">Request {decodedService}</h2>
+        <h2 className="text-xl font-semibold mb-6 text-black">
+          Request {decodedService}
+        </h2>
 
         {generalError && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md" role="alert" aria-live="assertive">
+          <div
+            className="mb-4 p-3 bg-red-100 text-red-700 rounded-md"
+            role="alert"
+            aria-live="assertive"
+          >
             {generalError}
           </div>
         )}
@@ -728,7 +797,10 @@ export default function Payment() {
             )}
           </div>
           <div>
-            <label htmlFor="lastName" className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="lastName"
+              className="block text-sm font-medium mb-1"
+            >
               Last Name
             </label>
             <input
@@ -806,5 +878,5 @@ export default function Payment() {
         </div>
       </div>
     </div>
-  )
+  );
 }

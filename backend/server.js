@@ -12,6 +12,7 @@ import { parse } from "csv-parse/sync"
 import { StandardCheckoutClient, Env, StandardCheckoutPayRequest } from "pg-sdk-node"
 import CRC32 from "crc-32"
 import dateformat from "dateformat"
+import axios from "axios"
 
 dotenv.config()
 
@@ -147,8 +148,8 @@ async function getNextGateway() {
   }
 
   // Rotate through 3 gateways: sabpaisa (0), phonepe (1), airpay (2)
-  const gateways = ["sabpaisa", "phonepe", "airpay"]
-  const gateway = gateways[counter.counter % 3]
+  const gateways = ["sabpaisa", "phonepe", "airpay", "cashfree"]
+  const gateway = gateways[counter.counter % 4]
 
   counter.counter += 1
   await counter.save()
@@ -797,6 +798,50 @@ app.post("/api/airpay/callback", async (req, res) => {
     console.error("[v0] ❌ Error processing Airpay callback:", error)
     console.error("[v0] Error stack:", error.stack)
     res.redirect(`${process.env.FRONTEND_URL}/payment/failed?error=processing_error`)
+  }
+})
+
+app.post("/api/cashfree/create-order", async(req, res)=> {
+  const { order_id, amount, name, phone, email } = req.body;
+    try {
+    const response = await axios.post(
+      "https://api.cashfree.com/pg/orders",
+      {
+        order_id,
+        order_amount: amount,
+        order_currency: "INR",
+        customer_details: {
+          customer_id: order_id,
+          customer_name: name,
+          customer_email: email || "",
+          customer_phone: phone || "",
+        },
+      },
+      {
+        headers: {
+          "x-client-id": process.env.CASHFREE_APP_ID,
+          "x-client-secret": process.env.CASHFREE_SECRET_KEY,
+          "x-api-version": "2022-09-01",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    await Payment.create({
+      orderId: order_id,
+      gateway: "cashfree",
+      amount: amount,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
+      paymentSessionId: response.data.payment_session_id,
+      status: "initiated",
+    });
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to create order" });
   }
 })
 
