@@ -871,7 +871,10 @@ app.post("/api/airpay/callback", async (req, res) => {
           { processed: true, processedAt: Date.now() },
         );
       }
-
+      console.log(
+        "redirecting to: ",
+        `${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}&amount=${AMOUNT}`,
+      );
       res.redirect(
         `${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}&amount=${AMOUNT}`,
       );
