@@ -791,7 +791,16 @@ app.post("/api/airpay/callback", async (req, res) => {
       CHMOD,
       CUSTOMERVPA,
     } = req.body;
-
+    console.log({
+      TRANSACTIONID: TRANSACTIONID,
+      APTRANSACTIONID: APTRANSACTIONID,
+      AMOUNT: AMOUNT,
+      TRANSACTIONSTATUS: TRANSACTIONSTATUS,
+      MESSAGE: MESSAGE,
+      ap_SecureHash: ap_SecureHash,
+      CHMOD: CHMOD,
+      CUSTOMERVPA: CUSTOMERVPA,
+    });
     if (!TRANSACTIONID) {
       console.error("[v0] ❌ Missing TRANSACTIONID in Airpay callback");
       console.error("[v0] This might mean Airpay is sending to wrong URL");
@@ -863,7 +872,7 @@ app.post("/api/airpay/callback", async (req, res) => {
           razorpayOrderId: APTRANSACTIONID,
         },
       );
-
+      console.log("TRANSACTIONSTATUS: ", TRANSACTIONSTATUS);
       const payment = await Payment.findOne({ orderId: TRANSACTIONID });
       if (payment && payment.customerEmail) {
         await UploadedData.findOneAndUpdate(
