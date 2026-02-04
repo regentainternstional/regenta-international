@@ -744,6 +744,26 @@ app.post("/api/airpay/create-payment", async (req, res) => {
       paymentSessionId: orderid,
       status: "initiated",
     });
+    console.log("payment created via airpay: ", {
+      mercid: mid,
+      buyerEmail: buyerEmail,
+      buyerFirstName: buyerFirstName,
+      buyerLastName: buyerLastName,
+      buyerAddress: buyerAddress,
+      buyerCity: buyerCity,
+      buyerState: buyerState,
+      buyerCountry: buyerCountry,
+      buyerPhone: buyerPhone,
+      buyerPinCode: buyerPinCode,
+      amount: amountValue,
+      orderid: orderid,
+      currency: "356",
+      isocurrency: "INR",
+      privatekey: privatekey,
+      checksum: checksum,
+      customvar: "Regenta Payment",
+      txnsubtype: "",
+    });
 
     res.json({
       success: true,
@@ -864,6 +884,7 @@ app.post("/api/airpay/callback", async (req, res) => {
         },
       );
       console.log("TRANSACTIONSTATUS: ", TRANSACTIONSTATUS);
+      console.log("TRANSACTIONID: ", TRANSACTIONID);
       const payment = await Payment.findOne({ orderId: TRANSACTIONID });
       if (payment && payment.customerEmail) {
         await UploadedData.findOneAndUpdate(
@@ -994,6 +1015,18 @@ app.post("/api/cashfree/create-order", async (req, res) => {
 //     res.json({ success: false }); // NEVER break frontend
 //   }
 // });
+
+app.get("/test-mail", async (req, res) => {
+  try {
+    await sendOwnerEmail({
+      subject: "🔥 Test Mail",
+      html: "<h2>Email system working</h2>",
+    });
+    res.send("Mail sent");
+  } catch {
+    res.status(500).send("Mail failed");
+  }
+});
 
 dbConnect().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
