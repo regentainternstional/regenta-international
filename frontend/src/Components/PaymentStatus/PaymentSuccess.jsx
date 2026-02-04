@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 
@@ -8,7 +8,6 @@ export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [transactionDetails, setTransactionDetails] = useState(null);
-  const notifyCalledRef = useRef(false);
 
   const txnId = searchParams.get("txnId");
   const orderId = searchParams.get("orderId");
@@ -31,29 +30,6 @@ export default function PaymentSuccess() {
     }
   }, [txnId]);
 
-  useEffect(() => {
-    if (notifyCalledRef.current) return;
-    notifyCalledRef.current = true;
-
-    if (!txnId) return;
-
-    fetch(
-      `${import.meta.env.VITE_BACKEND_API}/api/notify-owner-payment-success`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          txnId,
-          amount,
-        }),
-      },
-    ).catch((err) => {
-      // swallow error – must NOT affect UX
-      console.error("Owner notification failed:", err);
-    });
-  }, [txnId, amount]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4">

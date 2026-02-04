@@ -16,8 +16,8 @@ import {
 import CRC32 from "crc-32";
 import dateformat from "dateformat";
 import axios from "axios";
-import { sendOwnerEmail } from "./helpers/helper.js";
 import EmailLog from "./models/EmailLog.js";
+import { sendOwnerEmail } from "./helpers/helper.js";
 
 dotenv.config();
 
@@ -791,16 +791,7 @@ app.post("/api/airpay/callback", async (req, res) => {
       CHMOD,
       CUSTOMERVPA,
     } = req.body;
-    console.log({
-      TRANSACTIONID: TRANSACTIONID,
-      APTRANSACTIONID: APTRANSACTIONID,
-      AMOUNT: AMOUNT,
-      TRANSACTIONSTATUS: TRANSACTIONSTATUS,
-      MESSAGE: MESSAGE,
-      ap_SecureHash: ap_SecureHash,
-      CHMOD: CHMOD,
-      CUSTOMERVPA: CUSTOMERVPA,
-    });
+    console.log("📥 Airpay Callback:", req.body);
     if (!TRANSACTIONID) {
       console.error("[v0] ❌ Missing TRANSACTIONID in Airpay callback");
       console.error("[v0] This might mean Airpay is sending to wrong URL");
@@ -880,6 +871,24 @@ app.post("/api/airpay/callback", async (req, res) => {
           { processed: true, processedAt: Date.now() },
         );
       }
+
+      // 📧 SEND SUCCESS EMAIL (OWNER)
+      try {
+        await sendOwnerEmail({
+          subject: "✅ Payment Success - Airpay",
+          html: `
+            <h2>Payment Successful</h2>
+            <p><b>Order ID:</b> ${TRANSACTIONID}</p>
+            <p><b>Airpay Txn ID:</b> ${APTRANSACTIONID}</p>
+            <p><b>Amount:</b> ₹${AMOUNT}</p>
+            <p><b>Mode:</b> ${CHMOD || "N/A"}</p>
+            <p><b>Status:</b> SUCCESS</p>
+          `,
+        });
+        console.log("📧 Success email sent");
+      } catch (mailErr) {
+        console.error("❌ Email failed (success case):", mailErr);
+      }
       console.log(
         "redirecting to: ",
         `${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}&amount=${AMOUNT}`,
@@ -953,38 +962,38 @@ app.post("/api/cashfree/create-order", async (req, res) => {
   }
 });
 
-app.post("/api/notify-owner-payment-success", async (req, res) => {
-  try {
-    const { txnId, amount } = req.body;
+// app.post("/api/notify-owner-payment-success", async (req, res) => {
+//   try {
+//     const { txnId, amount } = req.body;
 
-    if (!txnId) {
-      return res.status(400).json({ success: false });
-    }
+//     if (!txnId) {
+//       return res.status(400).json({ success: false });
+//     }
 
-    // 🔒 Optional: prevent duplicate emails
-    const alreadySent = await EmailLog.findOne({ txnId });
-    console.log(alreadySent);
-    if (alreadySent) {
-      return res.json({ success: true });
-    }
+//     // 🔒 Optional: prevent duplicate emails
+//     const alreadySent = await EmailLog.findOne({ txnId });
+//     console.log(alreadySent);
+//     if (alreadySent) {
+//       return res.json({ success: true });
+//     }
 
-    await sendOwnerEmail({
-      subject: "New Payment Received ✅",
-      html: `
-        <h3>Payment Successful</h3>
-        <p>Transaction ID: <b>${txnId}</b></p>
-        <p>Amount: ₹${amount}</p>
-      `,
-    });
+//     await sendOwnerEmail({
+//       subject: "New Payment Received ✅",
+//       html: `
+//         <h3>Payment Successful</h3>
+//         <p>Transaction ID: <b>${txnId}</b></p>
+//         <p>Amount: ₹${amount}</p>
+//       `,
+//     });
 
-    await EmailLog.create({ txnId, sentAt: new Date() });
+//     await EmailLog.create({ txnId, sentAt: new Date() });
 
-    res.json({ success: true });
-  } catch (err) {
-    console.error("❌ Owner email failed:", err);
-    res.json({ success: false }); // NEVER break frontend
-  }
-});
+//     res.json({ success: true });
+//   } catch (err) {
+//     console.error("❌ Owner email failed:", err);
+//     res.json({ success: false }); // NEVER break frontend
+//   }
+// });
 
 dbConnect().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
