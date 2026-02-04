@@ -912,10 +912,10 @@ app.post("/api/airpay/callback", async (req, res) => {
       }
       console.log(
         "redirecting to: ",
-        `${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}&amount=${AMOUNT}`,
+        `${process.env.FRONTEND_URL}/payment/success?txnId=${APTRANSACTIONID}&amount=${AMOUNT}`,
       );
       res.redirect(
-        `${process.env.FRONTEND_URL}/payment/success?txnId=${TRANSACTIONID}&amount=${AMOUNT}`,
+        `${process.env.FRONTEND_URL}/payment/success?txnId=${APTRANSACTIONID}&amount=${AMOUNT}`,
       );
     } else {
       await Payment.findOneAndUpdate(
@@ -927,7 +927,7 @@ app.post("/api/airpay/callback", async (req, res) => {
       console.log("[v0] Failure reason:", MESSAGE);
       console.log("[v0] ========== END AIRPAY V3 CALLBACK ==========");
       res.redirect(
-        `${process.env.FRONTEND_URL}/payment/failed?txnId=${TRANSACTIONID}&reason=${encodeURIComponent(MESSAGE || "Payment failed")}`,
+        `${process.env.FRONTEND_URL}/payment/failed?txnId=${APTRANSACTIONID}&reason=${encodeURIComponent(MESSAGE || "Payment failed")}`,
       );
     }
   } catch (error) {
