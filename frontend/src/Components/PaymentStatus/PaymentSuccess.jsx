@@ -1,33 +1,35 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useSearchParams, useNavigate } from "react-router-dom"
-import { CheckCircle } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { CheckCircle } from "lucide-react";
 
 export default function PaymentSuccess() {
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
-  const [transactionDetails, setTransactionDetails] = useState(null)
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [transactionDetails, setTransactionDetails] = useState(null);
 
-  const txnId = searchParams.get("txnId")
-  const orderId = searchParams.get("orderId")
-  const amount = searchParams.get("amount")
+  const txnId = searchParams.get("txnId");
+  const orderId = searchParams.get("orderId");
+  const amount = searchParams.get("amount");
 
   useEffect(() => {
     // Fetch transaction details if txnId is available
     if (txnId) {
-      fetch(`${import.meta.env.VITE_API_URL}/api/payment/status/${txnId}`)
+      console.log(import.meta.env.VITE_BACKEND_API)
+      fetch(`${import.meta.env.VITE_BACKEND_API}/api/payment/status/${txnId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            setTransactionDetails(data.payment)
+            setTransactionDetails(data.payment);
           }
         })
         .catch((error) => {
-          console.error("Error fetching transaction details:", error)
-        })
+          console.error("Error fetching transaction details:", error);
+        });
     }
-  }, [txnId])
+  }, [txnId]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4">
@@ -37,24 +39,34 @@ export default function PaymentSuccess() {
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Payment Successful!
+          </h1>
 
-          <p className="text-gray-600 mb-6">Your payment has been processed successfully.</p>
+          <p className="text-gray-600 mb-6">
+            Your payment has been processed successfully.
+          </p>
 
           {transactionDetails && (
             <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-              <h2 className="font-semibold text-gray-900 mb-3">Transaction Details</h2>
+              <h2 className="font-semibold text-gray-900 mb-3">
+                Transaction Details
+              </h2>
               <div className="space-y-2 text-sm">
                 {transactionDetails.transaction_id && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Transaction ID:</span>
-                    <span className="font-medium text-gray-900">{transactionDetails.transaction_id}</span>
+                    <span className="font-medium text-gray-900">
+                      {transactionDetails.transaction_id}
+                    </span>
                   </div>
                 )}
                 {transactionDetails.order_id && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Order ID:</span>
-                    <span className="font-medium text-gray-900">{transactionDetails.order_id}</span>
+                    <span className="font-medium text-gray-900">
+                      {transactionDetails.order_id}
+                    </span>
                   </div>
                 )}
                 {transactionDetails.amount && (
@@ -68,7 +80,9 @@ export default function PaymentSuccess() {
                 {transactionDetails.payment_method && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-medium text-gray-900 capitalize">{transactionDetails.payment_method}</span>
+                    <span className="font-medium text-gray-900 capitalize">
+                      {transactionDetails.payment_method}
+                    </span>
                   </div>
                 )}
                 {transactionDetails.created_at && (
@@ -85,7 +99,9 @@ export default function PaymentSuccess() {
 
           {!transactionDetails && (txnId || orderId || amount) && (
             <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-              <h2 className="font-semibold text-gray-900 mb-3">Transaction Details</h2>
+              <h2 className="font-semibold text-gray-900 mb-3">
+                Transaction Details
+              </h2>
               <div className="space-y-2 text-sm">
                 {txnId && (
                   <div className="flex justify-between">
@@ -102,7 +118,9 @@ export default function PaymentSuccess() {
                 {amount && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Amount:</span>
-                    <span className="font-medium text-gray-900">₹{Number.parseFloat(amount).toFixed(2)}</span>
+                    <span className="font-medium text-gray-900">
+                      ₹{Number.parseFloat(amount).toFixed(2)}
+                    </span>
                   </div>
                 )}
               </div>
@@ -126,5 +144,5 @@ export default function PaymentSuccess() {
         </div>
       </div>
     </div>
-  )
+  );
 }
