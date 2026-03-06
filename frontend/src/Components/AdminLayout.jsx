@@ -17,6 +17,7 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/dashboard", label: "Dashboard", icon: "📊" },
     { path: "/admin/payments", label: "Payments", icon: "💳" },
     { path: "/admin/uploads", label: "Uploads", icon: "📤" },
+    { path: "/admin/airpay-payments", label: "Airpay Payments", icon: "✈️" },
   ]
 
   return (

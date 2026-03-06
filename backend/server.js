@@ -523,6 +523,20 @@ app.get("/payments", async (req, res) => {
   }
 });
 
+app.get("/payments/direct-airpay", async (req, res) => {
+  try {
+    const payments = await Payment.find({
+      gateway: "airpay",
+      source: "direct-airpay",
+    }).sort({ createdAt: -1 });
+
+    res.json(payments);
+  } catch (err) {
+    console.error("Error fetching airpay form payments:", err);
+    res.status(500).json({ error: "Failed to fetch payments" });
+  }
+});
+
 app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
   try {
     if (!req.file) {
@@ -737,6 +751,7 @@ app.post("/api/airpay/create-payment", async (req, res) => {
     await Payment.create({
       orderId: orderid,
       gateway: "airpay",
+      source: "direct-airpay",
       amount: amount,
       customerName: name,
       customerEmail: email,

@@ -33,6 +33,11 @@ const paymentSchema = new mongoose.Schema({
     enum: ["sabpaisa", "airpay", "razorpay", "phonepe", "cashfree"],
     required: true,
   },
+  source: {
+    type: String,
+    enum: ["service", "direct-airpay"],
+    default: "service",
+  },
   amount: { type: Number, required: true },
   currency: { type: String, default: "INR" },
   customerName: { type: String, required: true },

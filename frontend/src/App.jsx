@@ -16,6 +16,7 @@ import PaymentFailed from "./Components/PaymentStatus/PaymentFailed";
 import ContactUs from "./Components/Contact";
 import ContactUsPage from "./Components/ConatctUsPage";
 import AirpayPayment from "./Components/airpayPayment/AirpayPayment";
+import AdminAirpayPayments from "./Components/AdminAirpayPayments";
 
 const App = () => {
   return (
@@ -48,6 +49,16 @@ const App = () => {
             <ProtectedRoute>
               <AdminLayout>
                 <AdminPayments />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/airpay-payments"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdminAirpayPayments />
               </AdminLayout>
             </ProtectedRoute>
           }
