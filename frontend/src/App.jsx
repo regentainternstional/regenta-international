@@ -15,6 +15,7 @@ import PaymentSuccess from "./Components/PaymentStatus/PaymentSuccess";
 import PaymentFailed from "./Components/PaymentStatus/PaymentFailed";
 import ContactUs from "./Components/Contact";
 import ContactUsPage from "./Components/ConatctUsPage";
+import AirpayPayment from "./Components/airpayPayment/AirpayPayment";
 
 const App = () => {
   return (
@@ -26,6 +27,7 @@ const App = () => {
         <Route path="/return" element={<Return />} />
         <Route path="/contact-us" element={<ContactUsPage />} />
         <Route path="/payment/:id" element={<Payment />} />
+        <Route path="/airpay-payment" element={<AirpayPayment />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/payment/status" element={<PaymentStatus />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
