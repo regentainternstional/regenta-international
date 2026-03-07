@@ -153,6 +153,11 @@ export default function Payment() {
     e.preventDefault();
     setGeneralError("");
 
+    if (!formData.name || !formData.phone || !formData.email) {
+      setGeneralError("User data not loaded. Please refresh the page.");
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -244,7 +249,7 @@ export default function Payment() {
               </p>
             )}
           </div>
-          <div>
+          {/* <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
               First Name *
             </label>
@@ -267,7 +272,7 @@ export default function Payment() {
                 {errors.name}
               </p>
             )}
-          </div>
+          </div> */}
           {/* <div>
             <label
               htmlFor="lastName"
@@ -285,7 +290,7 @@ export default function Payment() {
               className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div> */}
-          <div>
+          {/* <div>
             <label htmlFor="phone" className="block text-sm font-medium mb-1">
               Phone Number *
             </label>
@@ -307,8 +312,8 @@ export default function Payment() {
                 {errors.phone}
               </p>
             )}
-          </div>
-          <div>
+          </div> */}
+          {/* <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email *
             </label>
@@ -331,7 +336,7 @@ export default function Payment() {
                 {errors.email}
               </p>
             )}
-          </div>
+          </div> */}
           <button
             onClick={handlePayment}
             disabled={loading}
