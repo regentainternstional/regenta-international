@@ -55,9 +55,9 @@ const Navbar = () => {
         </ul>
 
         {/* Contact Us Button */}
-        <Link  to="/airpay-payment">
+        <Link  to="/contact-us">
           <button className="hidden md:block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md font-medium shadow-sm">
-            Buy Now
+            Contact Us
           </button>
         </Link>
 
@@ -108,10 +108,10 @@ const Navbar = () => {
               Contact
             </li>
             <Link
-              to="/airpay-payment"
+              to="/contact-us"
               className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md font-medium w-full text-center shadow-sm"
             >
-              Buy Now
+              Contact Us
             </Link>
           </ul>
         )}

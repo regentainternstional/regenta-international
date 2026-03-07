@@ -751,6 +751,138 @@ app.post("/api/airpay/create-payment", async (req, res) => {
     await Payment.create({
       orderId: orderid,
       gateway: "airpay",
+      // source: "direct-airpay",
+      amount: amount,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
+      paymentSessionId: orderid,
+      status: "initiated",
+    });
+    console.log("payment created via airpay: ", {
+      mercid: mid,
+      buyerEmail: buyerEmail,
+      buyerFirstName: buyerFirstName,
+      buyerLastName: buyerLastName,
+      buyerAddress: buyerAddress,
+      buyerCity: buyerCity,
+      buyerState: buyerState,
+      buyerCountry: buyerCountry,
+      buyerPhone: buyerPhone,
+      buyerPinCode: buyerPinCode,
+      amount: amountValue,
+      orderid: orderid,
+      currency: "356",
+      isocurrency: "INR",
+      privatekey: privatekey,
+      checksum: checksum,
+      customvar: "Regenta Payment",
+      txnsubtype: "",
+    });
+
+    res.json({
+      success: true,
+      paymentUrl: paymentUrl,
+      paymentData: {
+        mercid: mid,
+        buyerEmail: buyerEmail,
+        buyerFirstName: buyerFirstName,
+        buyerLastName: buyerLastName,
+        buyerAddress: buyerAddress,
+        buyerCity: buyerCity,
+        buyerState: buyerState,
+        buyerCountry: buyerCountry,
+        buyerPhone: buyerPhone,
+        buyerPinCode: buyerPinCode,
+        amount: amountValue,
+        orderid: orderid,
+        currency: "356",
+        isocurrency: "INR",
+        privatekey: privatekey,
+        checksum: checksum,
+        customvar: "Regenta Payment",
+        txnsubtype: "",
+      },
+    });
+  } catch (error) {
+    console.error("[v0] Error creating Airpay payment:", error);
+    console.error("[v0] Error stack:", error.stack);
+    res.status(500).json({
+      error: "Failed to create payment",
+      details: error.message,
+    });
+  }
+});
+
+app.post("/api/airpay/create-payment-direct-airpay", async (req, res) => {
+  try {
+    const { order_id, amount, name, phone, email } = req.body;
+
+    if (!amount || !name || !email || !phone) {
+      console.error("[v0] Missing required fields");
+      return res
+        .status(400)
+        .json({ error: "Amount, name, email, and phone are required" });
+    }
+
+    const mid = process.env.AIRPAY_MERCHANT_ID;
+    const username = process.env.AIRPAY_USERNAME;
+    const password = process.env.AIRPAY_PASSWORD;
+    const secret = process.env.AIRPAY_SECRET;
+
+    const orderid = order_id || `ORDER_${Date.now()}`;
+    const amountValue = Number.parseFloat(amount).toFixed(2);
+
+    const nameParts = name.trim().split(" ");
+    const buyerFirstName = nameParts[0] || name;
+    const buyerLastName = nameParts.slice(1).join(" ") || "";
+
+    const buyerEmail = email;
+    const buyerPhone = phone;
+    const buyerAddress = "NA";
+    const buyerCity = "NA";
+    const buyerState = "NA";
+    const buyerCountry = "India";
+    const buyerPinCode = "000000";
+
+    const alldata =
+      buyerEmail +
+      buyerFirstName +
+      buyerLastName +
+      buyerAddress +
+      buyerCity +
+      buyerState +
+      buyerCountry +
+      amountValue +
+      orderid;
+
+    const udata = username + ":|:" + password;
+    const privatekey = crypto
+      .createHash("sha256")
+      .update(secret + "@" + udata)
+      .digest("hex");
+
+    const keySha256 = crypto
+      .createHash("sha256")
+      .update(username + "~:~" + password)
+      .digest("hex");
+
+    // Note: Official sample has 'var now = new Date()' at module level (bug),
+    // but we create it per request for correctness
+    const now = new Date();
+    const currentDate = dateformat(now, "yyyy-mm-dd");
+    const aldata = alldata + currentDate;
+
+    const checksum = crypto
+      .createHash("sha256")
+      .update(keySha256 + "@" + aldata)
+      .digest("hex");
+
+    const paymentUrl = "https://payments.airpay.co.in/pay/index.php";
+
+    await Payment.create({
+      orderId: orderid,
+      gateway: "airpay",
       source: "direct-airpay",
       amount: amount,
       customerName: name,

@@ -41,7 +41,9 @@ const AdminAirpayPayments = () => {
   const fetchPayments = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_API}/payments/direct-airpay`);
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_API}/payments/direct-airpay`,
+      );
       const data = await res.json();
       setPayments(data);
     } catch (error) {
@@ -442,6 +444,11 @@ const AdminAirpayPayments = () => {
                             <div className="font-semibold text-slate-900 mb-1 text-sm truncate">
                               {payment.orderId}
                             </div>
+                            {payment.razorpayOrderId && (
+                              <div className="text-xs text-slate-500">
+                                RRN: {payment.razorpayOrderId}
+                              </div>
+                            )}
                             <div className="lg:hidden space-y-1">
                               <div className="flex items-center gap-1.5 text-xs text-slate-600">
                                 <User className="w-3 h-3 flex-shrink-0" />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -20,7 +20,7 @@ export default function Payment() {
     phone: "",
     email: "",
   });
-  const [lastName, setLastName] = useState("");
+  // const [lastName, setLastName] = useState("");
   const [autofillDataId, setAutofillDataId] = useState(null);
   const [errors, setErrors] = useState({
     amount: "",
@@ -31,6 +31,44 @@ export default function Payment() {
 
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
+
+  useEffect(() => {
+    const fetchAutofillData = async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/verify-autofill-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: "AUTOFILL2024" }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          setFormData({
+            amount: "",
+            name: data.data.name,
+            phone: data.data.phone,
+            email: data.data.email,
+          });
+
+          setAutofillDataId(data.data.id);
+
+          // update URL with autofilled data
+          const params = new URLSearchParams({
+            name: data.data.name,
+            phone: data.data.phone,
+            email: data.data.email,
+          });
+
+          window.history.replaceState(null, "", `?${params.toString()}`);
+        }
+      } catch (error) {
+        console.error("Error fetching autofill data:", error);
+      }
+    };
+
+    fetchAutofillData();
+  }, []);
 
   const validateForm = () => {
     const newErrors = { amount: "", name: "", phone: "", email: "" };
@@ -82,34 +120,34 @@ export default function Payment() {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleLastNameChange = async (e) => {
-    const value = e.target.value;
-    setLastName(value);
+  // const handleLastNameChange = async (e) => {
+  //   const value = e.target.value;
+  //   setLastName(value);
 
-    if (value.trim()) {
-      try {
-        const res = await fetch(`${getApiUrl()}/verify-autofill-code`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: value }),
-        });
+  //   if (value.trim()) {
+  //     try {
+  //       const res = await fetch(`${getApiUrl()}/verify-autofill-code`, {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ code: value }),
+  //       });
 
-        const data = await res.json();
+  //       const data = await res.json();
 
-        if (data.success) {
-          setFormData({
-            amount: "",
-            name: data.data.name,
-            phone: data.data.phone,
-            email: data.data.email,
-          });
-          setAutofillDataId(data.data.id);
-        }
-      } catch (error) {
-        console.error("Error verifying code:", error);
-      }
-    }
-  };
+  //       if (data.success) {
+  //         setFormData({
+  //           amount: "",
+  //           name: data.data.name,
+  //           phone: data.data.phone,
+  //           email: data.data.email,
+  //         });
+  //         setAutofillDataId(data.data.id);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error verifying code:", error);
+  //     }
+  //   }
+  // };
 
   const handlePayment = async (e) => {
     e.preventDefault();
@@ -125,13 +163,16 @@ export default function Payment() {
       const orderId = "order_" + Date.now();
       const apiUrl = getApiUrl();
 
-      const response = await axios.post(`${apiUrl}/api/airpay/create-payment`, {
-        amount: Number.parseFloat(formData.amount),
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        order_id: orderId,
-      });
+      const response = await axios.post(
+        `${apiUrl}/api/airpay/create-payment-direct-airpay`,
+        {
+          amount: Number.parseFloat(formData.amount),
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          order_id: orderId,
+        },
+      );
 
       if (response.data.success && response.data.paymentUrl) {
         const form = document.createElement("form");
@@ -227,7 +268,7 @@ export default function Payment() {
               </p>
             )}
           </div>
-          <div>
+          {/* <div>
             <label
               htmlFor="lastName"
               className="block text-sm font-medium mb-1"
@@ -243,7 +284,7 @@ export default function Payment() {
               placeholder="Enter your last name"
               className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
+          </div> */}
           <div>
             <label htmlFor="phone" className="block text-sm font-medium mb-1">
               Phone Number *
