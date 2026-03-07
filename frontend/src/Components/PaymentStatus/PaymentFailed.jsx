@@ -113,7 +113,7 @@ export default function PaymentFailed() {
             </div>
           )}
 
-          <div className="space-y-3">
+          {/* <div className="space-y-3">
             <button
               onClick={() => navigate(-1)}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
@@ -126,7 +126,7 @@ export default function PaymentFailed() {
             >
               Back to Home
             </button>
-          </div>
+          </div> */}
 
           <p className="text-sm text-gray-500 mt-6">Need help? Contact our support team for assistance.</p>
         </div>

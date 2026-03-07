@@ -46,6 +46,7 @@ const paymentSchema = new mongoose.Schema({
   status: { type: String, default: "initiated" },
   paymentSessionId: String,
   razorpayOrderId: String,
+  rrn: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

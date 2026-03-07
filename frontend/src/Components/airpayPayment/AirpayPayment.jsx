@@ -345,13 +345,13 @@ export default function Payment() {
           >
             {loading ? "Processing..." : "Pay Now"}
           </button>
-          <button
+          {/* <button
             onClick={() => navigate("/")}
             className="w-full bg-gray-300 text-black py-3 rounded-md font-semibold hover:bg-gray-400 transition mt-2"
             disabled={loading}
           >
             Back
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

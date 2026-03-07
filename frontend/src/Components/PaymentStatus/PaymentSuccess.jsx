@@ -128,12 +128,12 @@ export default function PaymentSuccess() {
           )}
 
           <div className="space-y-3">
-            <button
+            {/* <button
               onClick={() => navigate("/")}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
               Back to Home
-            </button>
+            </button> */}
             <button
               onClick={() => window.print()}
               className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"

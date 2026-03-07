@@ -957,6 +957,7 @@ app.post("/api/airpay/callback", async (req, res) => {
       ap_SecureHash,
       CHMOD,
       CUSTOMERVPA,
+      RRN,
     } = req.body;
     console.log("📥 Airpay Callback:", req.body);
     if (!TRANSACTIONID) {
@@ -1022,14 +1023,29 @@ app.post("/api/airpay/callback", async (req, res) => {
     }
 
     if (TRANSACTIONSTATUS === "200") {
-      await Payment.findOneAndUpdate(
-        { orderId: TRANSACTIONID },
-        {
-          status: "success",
-          updatedAt: Date.now(),
-          razorpayOrderId: APTRANSACTIONID,
-        },
-      );
+      // await Payment.findOneAndUpdate(
+      //   { orderId: TRANSACTIONID },
+      //   {
+      //     status: "success",
+      //     updatedAt: Date.now(),
+      //     razorpayOrderId: APTRANSACTIONID,
+      //     rrn: RRN || null,
+      //   },
+      // );
+
+      const updateData = {
+        status: "success",
+        updatedAt: Date.now(),
+        razorpayOrderId: APTRANSACTIONID,
+      };
+
+      // only update rrn if present
+      if (RRN) {
+        updateData.rrn = RRN;
+      }
+
+      await Payment.findOneAndUpdate({ orderId: TRANSACTIONID }, updateData);
+
       console.log("TRANSACTIONSTATUS: ", TRANSACTIONSTATUS);
       console.log("TRANSACTIONID: ", TRANSACTIONID);
       const payment = await Payment.findOne({ orderId: TRANSACTIONID });

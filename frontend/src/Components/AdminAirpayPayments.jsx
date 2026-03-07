@@ -444,9 +444,9 @@ const AdminAirpayPayments = () => {
                             <div className="font-semibold text-slate-900 mb-1 text-sm truncate">
                               {payment.orderId}
                             </div>
-                            {payment.razorpayOrderId && (
+                            {payment.rrn && (
                               <div className="text-xs text-slate-500">
-                                RRN: {payment.razorpayOrderId}
+                                RRN: {payment.rrn}
                               </div>
                             )}
                             <div className="lg:hidden space-y-1">
