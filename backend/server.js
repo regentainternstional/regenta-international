@@ -21,6 +21,29 @@ import { sendOwnerEmail } from "./helpers/helper.js";
 
 dotenv.config();
 
+const sendWebhook = async (event, payload) => {
+  const urls = (process.env.WEBHOOK_URLS || "")
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean);
+
+  if (urls.length === 0) return;
+
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": process.env.WEBHOOK_API_KEY || "",
+  };
+
+  await Promise.allSettled(
+    urls.map((url) =>
+      axios
+        .post(url, { event, payload }, { headers, timeout: 5000 })
+        .then(() => console.log(`[webhook] sent: ${event} → ${url}`))
+        .catch((err) => console.error(`[webhook] failed (${event}) → ${url}:`, err.message))
+    )
+  );
+};
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -891,6 +914,18 @@ app.post("/api/airpay/create-payment-direct-airpay", async (req, res) => {
       paymentSessionId: orderid,
       status: "initiated",
     });
+
+    // Webhook: payment initiated
+    sendWebhook("airpay.payment.initiated", {
+      orderId: orderid,
+      amount: amountValue,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
+      gateway: "airpay",
+      status: "initiated",
+    });
+
     console.log("payment created via airpay: ", {
       mercid: mid,
       buyerEmail: buyerEmail,
@@ -934,6 +969,7 @@ app.post("/api/airpay/create-payment-direct-airpay", async (req, res) => {
         checksum: checksum,
         customvar: "Regenta Payment",
         txnsubtype: "",
+        chmod: "upi",
       },
     });
   } catch (error) {
@@ -1073,6 +1109,16 @@ app.post("/api/airpay/callback", async (req, res) => {
       } catch (mailErr) {
         console.error("❌ Email failed (success case):", mailErr);
       }
+      // Webhook: payment success
+      sendWebhook("airpay.payment.success", {
+        orderId: TRANSACTIONID,
+        airpayTxnId: APTRANSACTIONID,
+        amount: AMOUNT,
+        mode: CHMOD || null,
+        rrn: RRN || null,
+        status: "success",
+      });
+
       console.log(
         "redirecting to: ",
         `${process.env.FRONTEND_URL}/payment/success?txnId=${APTRANSACTIONID}&amount=${AMOUNT}`,
@@ -1085,6 +1131,15 @@ app.post("/api/airpay/callback", async (req, res) => {
         { orderId: TRANSACTIONID },
         { status: "failed", updatedAt: Date.now() },
       );
+
+      // Webhook: payment failed
+      sendWebhook("airpay.payment.failed", {
+        orderId: TRANSACTIONID,
+        airpayTxnId: APTRANSACTIONID,
+        amount: AMOUNT,
+        reason: MESSAGE || "Payment failed",
+        status: "failed",
+      });
 
       console.log("[v0] ❌ Payment failed, redirecting to failed page");
       console.log("[v0] Failure reason:", MESSAGE);
